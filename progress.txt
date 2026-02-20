@@ -39,3 +39,15 @@ Thread: https://ampcode.com/threads/T-019c7b4b-6997-74a9-a5cb-e6532ef0a03c
 - **Learnings for future iterations:**
   - US-003 was satisfied by existing scaffolding from US-001; sometimes stories just need verification
 ---
+
+## 2026-02-20 - US-004
+Thread: https://ampcode.com/threads/T-019c7b53-925c-74bb-add0-57dae862c090
+- Added `parseArgs()` function to parse `--beta` and `--next` flags from `process.argv`
+- URL tag is now dynamic: `https://registry.npmjs.org/n8n/${tag}` where tag is latest/beta/next
+- Error cases: both flags together → stderr + exit 1; unknown flags → usage hint + exit 1
+- Files changed: src/index.ts
+- **Learnings for future iterations:**
+  - `dist/` is in .gitignore — only commit source files, not compiled output
+  - `process.argv.slice(2)` gives CLI args after node and script path
+  - No arg-parsing library needed for simple flag handling — plain string filtering works
+---

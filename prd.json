@@ -46,6 +46,22 @@
       "priority": 3,
       "passes": true,
       "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Support --beta and --next flags for non-stable versions",
+      "description": "As an n8n self-hoster, I want to run 'n8nrel --beta' or 'n8nrel --next' so that I can check the latest beta or next n8n version.",
+      "acceptanceCriteria": [
+        "Running 'n8nrel --beta' fetches https://registry.npmjs.org/n8n/beta and prints the version to stdout",
+        "Running 'n8nrel --next' fetches https://registry.npmjs.org/n8n/next and prints the version to stdout",
+        "Running 'n8nrel' without flags still prints the latest stable version (default behavior unchanged)",
+        "If both --beta and --next are provided, the tool prints an error to stderr and exits with a non-zero exit code",
+        "If an unknown flag is provided, the tool prints a usage hint to stderr and exits with a non-zero exit code",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
     }
   ]
 }
