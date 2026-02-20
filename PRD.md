@@ -1,0 +1,73 @@
+# [PRD] n8nrel - CLI tool to fetch the latest n8n version
+
+**Summary:** A lightweight CLI tool that fetches and prints the latest stable n8n release version number.
+
+| Created: Feb 20, 2026 | Status: WIP |
+| :---- | :---- |
+| Owner: jan | |
+
+## Introduction
+
+This PRD defines the requirements for `n8nrel`, a small single-purpose CLI tool written in TypeScript. The tool fetches the latest stable n8n version from a public API and prints it to stdout. It is intended for quick personal use on macOS, e.g. to check if a self-hosted n8n instance is up to date.
+
+## Background
+
+[n8n](https://n8n.io) is an open-source workflow automation platform. It publishes releases on GitHub and npm. Checking the latest version currently requires visiting the docs site, the GitHub releases page, or the npm registry manually.
+
+The most reliable source for the latest **stable** version is the npm registry endpoint:
+
+```
+https://registry.npmjs.org/n8n/latest
+```
+
+This returns a JSON payload whose `version` field contains the current stable version (e.g. `2.6.4`). The GitHub Releases API can lag behind npm, so npm is the preferred source.
+
+## Problem
+
+### Personas
+
+* **n8n self-hoster (me)** wants a fast way to check the latest stable n8n version from the terminal without opening a browser.
+
+## Requirements and Phases
+
+|  | Requirements |
+| :---- | :---- |
+| **Phase 1:** Print the latest stable n8n version | CLI command `n8nrel` fetches and prints the latest stable version |
+
+### Phase 1: Print the latest stable n8n version
+
+#### Hypothesis Outcomes & KPIs
+
+##### Hypothesis 1
+
+Running `n8nrel` prints the latest stable n8n version in under 2 seconds on a typical broadband connection.
+
+#### Requirement 1: Fetch latest version from npm registry
+
+The tool makes an HTTP GET request to `https://registry.npmjs.org/n8n/latest` and extracts the `version` field from the JSON response.
+
+##### Acceptance Criteria
+
+1. Running `n8nrel` outputs the latest stable n8n version string (e.g. `2.6.4`) followed by a newline.
+2. If the network request fails or the response is malformed, the tool prints a human-readable error message to stderr and exits with a non-zero exit code.
+3. The tool exits with code `0` on success.
+
+##### Considerations
+
+1. Should the tool support fetching the `beta`/`next` version via a flag (e.g. `--beta`)? — Out of scope for Phase 1.
+2. Should output include a prefix like `n8n@` or just the bare version number? — Bare version number for easy piping.
+
+#### Requirement 2: Installable as a global CLI command
+
+The tool can be compiled/linked so that typing `n8nrel` in a macOS terminal executes it.
+
+##### Acceptance Criteria
+
+1. After running `npm link` (or equivalent), the command `n8nrel` is available in the terminal.
+2. The `package.json` `bin` field maps `n8nrel` to the compiled entry point.
+3. The compiled output runs with Node.js without requiring `ts-node` or other dev dependencies at runtime.
+
+##### Considerations
+
+1. Which TypeScript build tool to use (tsc, tsx, esbuild, etc.)?
+2. What minimum Node.js version should be supported?
