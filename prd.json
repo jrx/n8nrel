@@ -1,0 +1,51 @@
+{
+  "project": "n8nrel",
+  "branchName": "ralph/n8nrel-cli",
+  "description": "A lightweight CLI tool written in TypeScript that fetches and prints the latest stable n8n release version from the npm registry.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Initialize TypeScript project with CLI entry point",
+      "description": "As a developer, I want the project scaffolded with package.json, tsconfig.json, and a bin entry point so that the CLI can be built and linked globally.",
+      "acceptanceCriteria": [
+        "package.json exists with name 'n8nrel' and bin field mapping 'n8nrel' to the compiled entry point",
+        "tsconfig.json is configured to compile TypeScript to a dist/ directory",
+        "A src/index.ts file exists with a shebang line (#!/usr/bin/env node)",
+        "Running 'npm run build' compiles the project without errors",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Fetch and print the latest stable n8n version",
+      "description": "As an n8n self-hoster, I want to run 'n8nrel' in my terminal so that I can see the latest stable n8n version without opening a browser.",
+      "acceptanceCriteria": [
+        "Running 'n8nrel' makes an HTTP GET request to https://registry.npmjs.org/n8n/latest",
+        "The version field from the JSON response is printed to stdout followed by a newline (e.g. '2.6.4')",
+        "The tool exits with code 0 on success",
+        "If the network request fails or the response is malformed, a human-readable error message is printed to stderr and the tool exits with a non-zero exit code",
+        "No external HTTP libraries are used (use Node.js built-in fetch)",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Install as a global CLI command",
+      "description": "As a user, I want to run 'npm link' so that the 'n8nrel' command is available globally in my macOS terminal.",
+      "acceptanceCriteria": [
+        "After running 'npm run build && npm link', typing 'n8nrel' in a new terminal session executes the tool",
+        "The compiled output runs with Node.js without requiring ts-node or other dev dependencies at runtime",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}
