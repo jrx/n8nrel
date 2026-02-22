@@ -62,6 +62,21 @@
       "priority": 4,
       "passes": true,
       "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Support --changelog flag to print release notes excerpt",
+      "description": "As an n8n self-hoster, I want to run 'n8nrel --changelog' so that I can see a summary of what changed in the latest release without visiting GitHub.",
+      "acceptanceCriteria": [
+        "Running 'n8nrel --changelog' fetches the latest release from https://api.github.com/repos/n8n-io/n8n/releases/latest and prints the release body to stdout",
+        "The output includes the version tag and the changelog text",
+        "The --changelog flag can be combined with --beta or --next to show the changelog for that release channel",
+        "If the GitHub API request fails, a human-readable error message is printed to stderr and the tool exits with a non-zero exit code",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
     }
   ]
 }

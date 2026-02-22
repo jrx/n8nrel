@@ -4,6 +4,7 @@
 - Compiled output goes to `dist/` directory
 - Uses Node16 module resolution (ESM-compatible with .js extensions in imports)
 - @types/node is needed for `process` global; added as devDependency
+- n8n GitHub release tags use format `n8n@{version}` — use `/releases/tags/{tag}` endpoint
 
 ---
 
@@ -50,4 +51,18 @@ Thread: https://ampcode.com/threads/T-019c7b53-925c-74bb-add0-57dae862c090
   - `dist/` is in .gitignore — only commit source files, not compiled output
   - `process.argv.slice(2)` gives CLI args after node and script path
   - No arg-parsing library needed for simple flag handling — plain string filtering works
+---
+
+## 2026-02-22 - US-005
+Thread: https://ampcode.com/threads/T-019c8629-b296-742d-aba7-36fb293577d7
+- Added `--changelog` flag support; fetches GitHub release by tag `n8n@{version}`
+- Refactored `main()` into `fetchVersion()` and `fetchChangelog()` helpers
+- Changelog works standalone or combined with `--beta`/`--next`
+- GitHub API errors produce human-readable stderr messages + non-zero exit
+- Files changed: src/index.ts
+- **Learnings for future iterations:**
+  - n8n GitHub release tags use format `n8n@{version}` (e.g. `n8n@2.8.3`)
+  - GitHub releases API at `/releases/tags/{tag}` is the most direct way to fetch a specific release
+  - `Accept: application/vnd.github.v3+json` header is good practice for GitHub API calls
+  - Release body can be `null` — handle with nullish coalescing
 ---
