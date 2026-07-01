@@ -112,7 +112,21 @@ async function fetchHelmChartRelease(): Promise<{ version: string; tagName: stri
 }
 
 async function main(): Promise<void> {
-  const { tag, changelog } = parseArgs(process.argv);
+  const { tag, changelog, helm } = parseArgs(process.argv);
+
+  if (helm) {
+    const release = await fetchHelmChartRelease();
+    if (changelog) {
+      console.log(release.tagName);
+      if (release.body) {
+        console.log(release.body);
+      }
+    } else {
+      console.log(release.version);
+    }
+    return;
+  }
+
   const version = await fetchVersion(tag);
 
   if (changelog) {

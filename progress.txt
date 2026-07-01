@@ -25,4 +25,26 @@ Started: 2026-07-01
 - **Learnings for future iterations:**
   - Conflict checks follow the same pattern as the existing `--beta`/`--next` guard
   - Build + typecheck pass cleanly; no new deps needed
+- `main()` helm branch: early return after handling helm prevents fallthrough to npm path
+---
+
+## [2026-07-01] - add-helm-chart-version - 2. Helm chart fetch
+- Added `fetchHelmChartRelease()` that hits `/repos/n8n-io/n8n-hosting/releases/latest`
+- Validates response shape (tag_name + body), throws with status on non-success
+- Strips leading `v` from tag_name to produce clean version string
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - GitHub latest-release endpoint: `/repos/{owner}/{repo}/releases/latest`
+  - n8n-hosting tags use `v`-prefixed semver (e.g. `v1.10.1`); strip with `.startsWith("v") ? .slice(1) : tag`
+  - Pattern matches the existing `fetchChangelog` function structure
+---
+
+## [2026-07-01] - add-helm-chart-version - 3. Wire into main
+- Branched on `helm` flag in `main()` to call `fetchHelmChartRelease()`
+- Helm path: prints `release.version` by default; prints `release.tagName` + notes when `--changelog`
+- Early `return` after helm branch preserves existing npm path unchanged
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - `--helm --changelog` prints `tagName` (with leading `v`) to match the n8n changelog output style
+  - Live smoke test confirmed: `--helm` → `1.10.1`, `--helm --changelog` → tag + notes, `--helm --beta` → exit 1
 ---

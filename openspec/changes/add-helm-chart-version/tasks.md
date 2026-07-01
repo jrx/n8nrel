@@ -19,10 +19,10 @@
 
 ## 3. Wire into main
 
-- [ ] 3.1 In `main`, branch on the `helm` flag to use the chart fetch path
-- [ ] 3.2 Print the version by default; print the tag plus release notes when
+- [x] 3.1 In `main`, branch on the `helm` flag to use the chart fetch path
+- [x] 3.2 Print the version by default; print the tag plus release notes when
       `--changelog` is set
-- [ ] 3.3 Preserve existing n8n npm behavior when `--helm` is absent
+- [x] 3.3 Preserve existing n8n npm behavior when `--helm` is absent
 
 ## 4. Verification
 
