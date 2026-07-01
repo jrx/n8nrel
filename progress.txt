@@ -48,3 +48,12 @@ Started: 2026-07-01
   - `--helm --changelog` prints `tagName` (with leading `v`) to match the n8n changelog output style
   - Live smoke test confirmed: `--helm` → `1.10.1`, `--helm --changelog` → tag + notes, `--helm --beta` → exit 1
 ---
+
+## [2026-07-01] - add-helm-chart-version - 4. Verification
+- Ran live smoke tests: `--helm` → `1.10.1` (exit 0), `--helm --changelog` → tag + release notes (exit 0), `--helm --beta` → error (exit 1)
+- Added Phase 2 section to PRD.md documenting the `--helm` flag, `--changelog` combination, and conflict rules
+- `openspec validate add-helm-chart-version --strict` passes
+- Files changed: `PRD.md`, `openspec/changes/add-helm-chart-version/tasks.md`
+- **Learnings for future iterations:**
+  - Verification task sections are quick when preceding sections left the impl complete; just run the scenarios and document in PRD
+---

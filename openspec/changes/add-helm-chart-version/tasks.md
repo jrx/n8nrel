@@ -26,10 +26,10 @@
 
 ## 4. Verification
 
-- [ ] 4.1 Run `n8nrel --helm` and confirm it prints the chart version (for
+- [x] 4.1 Run `n8nrel --helm` and confirm it prints the chart version (for
       example `1.10.1`)
-- [ ] 4.2 Run `n8nrel --helm --changelog` and confirm it prints the tag plus
+- [x] 4.2 Run `n8nrel --helm --changelog` and confirm it prints the tag plus
       release notes
-- [ ] 4.3 Run `n8nrel --helm --beta` and confirm it errors with a non-zero exit
+- [x] 4.3 Run `n8nrel --helm --beta` and confirm it errors with a non-zero exit
       code
-- [ ] 4.4 Update `PRD.md` to document the `--helm` flag
+- [x] 4.4 Update `PRD.md` to document the `--helm` flag
