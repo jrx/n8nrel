@@ -3,30 +3,37 @@
 interface ParsedArgs {
   tag: string;
   changelog: boolean;
+  helm: boolean;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
   const flags = args.filter((a) => a.startsWith("--"));
-  const known = new Set(["--beta", "--next", "--changelog"]);
+  const known = new Set(["--beta", "--next", "--changelog", "--helm"]);
   const unknown = flags.filter((f) => !known.has(f));
 
   if (unknown.length > 0) {
-    process.stderr.write(`Unknown flag: ${unknown[0]}\nUsage: n8nrel [--beta | --next] [--changelog]\n`);
+    process.stderr.write(`Unknown flag: ${unknown[0]}\nUsage: n8nrel [--beta | --next] [--changelog] [--helm]\n`);
     process.exit(1);
   }
 
   const hasBeta = flags.includes("--beta");
   const hasNext = flags.includes("--next");
   const changelog = flags.includes("--changelog");
+  const helm = flags.includes("--helm");
 
   if (hasBeta && hasNext) {
     process.stderr.write("Error: --beta and --next cannot be used together\n");
     process.exit(1);
   }
 
+  if (helm && (hasBeta || hasNext)) {
+    process.stderr.write("Error: --helm cannot be used with --beta or --next\n");
+    process.exit(1);
+  }
+
   const tag = hasBeta ? "beta" : hasNext ? "next" : "latest";
-  return { tag, changelog };
+  return { tag, changelog, helm };
 }
 
 async function fetchVersion(tag: string): Promise<string> {

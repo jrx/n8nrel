@@ -1,10 +1,10 @@
 ## 1. Argument parsing
 
-- [ ] 1.1 Add `--helm` to the set of known flags in `parseArgs`
-- [ ] 1.2 Return a `helm` boolean from `parseArgs`
-- [ ] 1.3 Error and exit non-zero when `--helm` is combined with `--beta` or
+- [x] 1.1 Add `--helm` to the set of known flags in `parseArgs`
+- [x] 1.2 Return a `helm` boolean from `parseArgs`
+- [x] 1.3 Error and exit non-zero when `--helm` is combined with `--beta` or
       `--next`
-- [ ] 1.4 Update the usage string to mention `--helm`
+- [x] 1.4 Update the usage string to mention `--helm`
 
 ## 2. Helm chart fetch
 

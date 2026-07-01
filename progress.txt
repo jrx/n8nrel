@@ -15,3 +15,14 @@ Started: 2026-07-01
 - Responses are validated for shape before use; errors thrown with status/context
 - `main().catch` prints `Error: {message}` to stderr and exits 1
 ---
+
+## [2026-07-01] - add-helm-chart-version - 1. Argument parsing
+- Added `--helm` to the `known` set in `parseArgs`
+- Extended `ParsedArgs` interface with `helm: boolean`
+- Added conflict check: `--helm` with `--beta` or `--next` exits 1 with error message
+- Updated usage string to include `[--helm]`
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - Conflict checks follow the same pattern as the existing `--beta`/`--next` guard
+  - Build + typecheck pass cleanly; no new deps needed
+---
