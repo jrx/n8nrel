@@ -1,68 +1,59 @@
+# Ralph Progress Log
+Started: 2026-07-01
+
 ## Codebase Patterns
 - Build with `npm run build` (tsc), typecheck with `npm run typecheck` (tsc --noEmit)
 - Entry point is `src/index.ts` with shebang `#!/usr/bin/env node`
 - Compiled output goes to `dist/` directory
 - Uses Node16 module resolution (ESM-compatible with .js extensions in imports)
 - @types/node is needed for `process` global; added as devDependency
-- n8n GitHub release tags use format `n8n@{version}` — use `/releases/tags/{tag}` endpoint
-
+- No external runtime dependencies; uses built-in `fetch` for HTTP
+- Arg parsing lives in `parseArgs`; flags checked against a `known` Set, unknown flags exit non-zero
+- Mutually-exclusive flags (e.g. --beta/--next) are validated in `parseArgs` and exit 1 on conflict
+- npm version lookups hit `https://registry.npmjs.org/n8n/{tag}`
+- n8n GitHub release tags use format `n8n@{version}` via `/repos/n8n-io/n8n/releases/tags/{tag}`
+- Responses are validated for shape before use; errors thrown with status/context
+- `main().catch` prints `Error: {message}` to stderr and exits 1
 ---
 
-## 2026-02-20 - US-001
-Thread: https://ampcode.com/threads/T-019c7b4a-8788-76ec-95ea-e6de84d2c97a
-- Scaffolded TypeScript project: package.json, tsconfig.json, src/index.ts, .gitignore
-- package.json has bin field mapping `n8nrel` to `./dist/index.js`
-- tsconfig targets ES2022 with Node16 module resolution, outputs to dist/
-- Files changed: package.json, package-lock.json, tsconfig.json, src/index.ts, .gitignore
+## [2026-07-01] - add-helm-chart-version - 1. Argument parsing
+- Added `--helm` to the `known` set in `parseArgs`
+- Extended `ParsedArgs` interface with `helm: boolean`
+- Added conflict check: `--helm` with `--beta` or `--next` exits 1 with error message
+- Updated usage string to include `[--helm]`
+- Files changed: `src/index.ts`
 - **Learnings for future iterations:**
-  - TypeScript shebang lines are preserved in compiled output automatically
-  - Project uses no external dependencies yet — only devDependency on typescript
+  - Conflict checks follow the same pattern as the existing `--beta`/`--next` guard
+  - Build + typecheck pass cleanly; no new deps needed
+- `main()` helm branch: early return after handling helm prevents fallthrough to npm path
 ---
 
-## 2026-02-20 - US-002
-Thread: https://ampcode.com/threads/T-019c7b4b-6997-74a9-a5cb-e6532ef0a03c
-- Implemented fetch to npm registry for latest n8n version, prints version to stdout
-- Error handling: stderr message + non-zero exit on failure
-- Uses built-in Node.js fetch (no external HTTP libs)
-- Files changed: src/index.ts, package.json, package-lock.json (added @types/node)
+## [2026-07-01] - add-helm-chart-version - 2. Helm chart fetch
+- Added `fetchHelmChartRelease()` that hits `/repos/n8n-io/n8n-hosting/releases/latest`
+- Validates response shape (tag_name + body), throws with status on non-success
+- Strips leading `v` from tag_name to produce clean version string
+- Files changed: `src/index.ts`
 - **Learnings for future iterations:**
-  - @types/node must be installed for `process` to typecheck — original scaffold didn't include it
-  - Node.js built-in `fetch` is available without imports in ES2022+ target
-  - Validate response shape with `unknown` type + narrowing to stay strict-mode safe
+  - GitHub latest-release endpoint: `/repos/{owner}/{repo}/releases/latest`
+  - n8n-hosting tags use `v`-prefixed semver (e.g. `v1.10.1`); strip with `.startsWith("v") ? .slice(1) : tag`
+  - Pattern matches the existing `fetchChangelog` function structure
 ---
 
-## 2026-02-20 - US-003
-Thread: https://ampcode.com/threads/T-019c7b4b-6997-74a9-a5cb-e6532ef0a03c
-- Verified `npm run build && npm link` works — `n8nrel` command available globally
-- Compiled output includes shebang, runs with plain Node.js, no ts-node needed
-- No code changes required — US-001 and US-002 already set this up correctly
-- Files changed: none (verification only)
+## [2026-07-01] - add-helm-chart-version - 3. Wire into main
+- Branched on `helm` flag in `main()` to call `fetchHelmChartRelease()`
+- Helm path: prints `release.version` by default; prints `release.tagName` + notes when `--changelog`
+- Early `return` after helm branch preserves existing npm path unchanged
+- Files changed: `src/index.ts`
 - **Learnings for future iterations:**
-  - US-003 was satisfied by existing scaffolding from US-001; sometimes stories just need verification
+  - `--helm --changelog` prints `tagName` (with leading `v`) to match the n8n changelog output style
+  - Live smoke test confirmed: `--helm` → `1.10.1`, `--helm --changelog` → tag + notes, `--helm --beta` → exit 1
 ---
 
-## 2026-02-20 - US-004
-Thread: https://ampcode.com/threads/T-019c7b53-925c-74bb-add0-57dae862c090
-- Added `parseArgs()` function to parse `--beta` and `--next` flags from `process.argv`
-- URL tag is now dynamic: `https://registry.npmjs.org/n8n/${tag}` where tag is latest/beta/next
-- Error cases: both flags together → stderr + exit 1; unknown flags → usage hint + exit 1
-- Files changed: src/index.ts
+## [2026-07-01] - add-helm-chart-version - 4. Verification
+- Ran live smoke tests: `--helm` → `1.10.1` (exit 0), `--helm --changelog` → tag + release notes (exit 0), `--helm --beta` → error (exit 1)
+- Added Phase 2 section to PRD.md documenting the `--helm` flag, `--changelog` combination, and conflict rules
+- `openspec validate add-helm-chart-version --strict` passes
+- Files changed: `PRD.md`, `openspec/changes/add-helm-chart-version/tasks.md`
 - **Learnings for future iterations:**
-  - `dist/` is in .gitignore — only commit source files, not compiled output
-  - `process.argv.slice(2)` gives CLI args after node and script path
-  - No arg-parsing library needed for simple flag handling — plain string filtering works
----
-
-## 2026-02-22 - US-005
-Thread: https://ampcode.com/threads/T-019c8629-b296-742d-aba7-36fb293577d7
-- Added `--changelog` flag support; fetches GitHub release by tag `n8n@{version}`
-- Refactored `main()` into `fetchVersion()` and `fetchChangelog()` helpers
-- Changelog works standalone or combined with `--beta`/`--next`
-- GitHub API errors produce human-readable stderr messages + non-zero exit
-- Files changed: src/index.ts
-- **Learnings for future iterations:**
-  - n8n GitHub release tags use format `n8n@{version}` (e.g. `n8n@2.8.3`)
-  - GitHub releases API at `/releases/tags/{tag}` is the most direct way to fetch a specific release
-  - `Accept: application/vnd.github.v3+json` header is good practice for GitHub API calls
-  - Release body can be `null` — handle with nullish coalescing
+  - Verification task sections are quick when preceding sections left the impl complete; just run the scenarios and document in PRD
 ---

@@ -33,6 +33,7 @@ This returns a JSON payload whose `version` field contains the current stable ve
 |  | Requirements |
 | :---- | :---- |
 | **Phase 1:** Print the latest stable n8n version | CLI command `n8nrel` fetches and prints the latest stable version |
+| **Phase 2:** Helm chart version lookup | `--helm` flag fetches the latest n8n Helm chart version from `n8n-io/n8n-hosting` |
 
 ### Phase 1: Print the latest stable n8n version
 
@@ -71,3 +72,23 @@ The tool can be compiled/linked so that typing `n8nrel` in a macOS terminal exec
 
 1. Which TypeScript build tool to use (tsc, tsx, esbuild, etc.)?
 2. What minimum Node.js version should be supported?
+
+### Phase 2: Helm chart version lookup
+
+Teams running n8n on Kubernetes track the official Helm chart from `n8n-io/n8n-hosting`. Its version has its own release cadence and does not match the n8n application version.
+
+#### Requirement 3: Fetch latest Helm chart version from GitHub
+
+When `--helm` is passed, the tool makes an HTTP GET request to the GitHub REST API (`/repos/n8n-io/n8n-hosting/releases/latest`) and prints the chart version.
+
+##### Acceptance Criteria
+
+1. Running `n8nrel --helm` prints the latest Helm chart version (e.g. `1.10.1`) with the leading `v` stripped, followed by a newline.
+2. Running `n8nrel --helm --changelog` prints the release tag (e.g. `v1.10.1`) followed by the release notes.
+3. Running `n8nrel --helm --beta` or `n8nrel --helm --next` exits with a non-zero exit code and a descriptive error message, since the Helm chart has no beta or next channel.
+4. If the network request fails or the response is malformed, the tool prints a human-readable error to stderr and exits with a non-zero exit code.
+5. Existing `n8nrel` behavior (no `--helm` flag) is unchanged.
+
+##### Considerations
+
+1. The Helm chart release tags use `v`-prefixed semver (e.g. `v1.10.1`); the leading `v` is stripped for bare version output to stay consistent with the npm output format.
