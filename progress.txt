@@ -1,0 +1,68 @@
+## Codebase Patterns
+- Build with `npm run build` (tsc), typecheck with `npm run typecheck` (tsc --noEmit)
+- Entry point is `src/index.ts` with shebang `#!/usr/bin/env node`
+- Compiled output goes to `dist/` directory
+- Uses Node16 module resolution (ESM-compatible with .js extensions in imports)
+- @types/node is needed for `process` global; added as devDependency
+- n8n GitHub release tags use format `n8n@{version}` — use `/releases/tags/{tag}` endpoint
+
+---
+
+## 2026-02-20 - US-001
+Thread: https://ampcode.com/threads/T-019c7b4a-8788-76ec-95ea-e6de84d2c97a
+- Scaffolded TypeScript project: package.json, tsconfig.json, src/index.ts, .gitignore
+- package.json has bin field mapping `n8nrel` to `./dist/index.js`
+- tsconfig targets ES2022 with Node16 module resolution, outputs to dist/
+- Files changed: package.json, package-lock.json, tsconfig.json, src/index.ts, .gitignore
+- **Learnings for future iterations:**
+  - TypeScript shebang lines are preserved in compiled output automatically
+  - Project uses no external dependencies yet — only devDependency on typescript
+---
+
+## 2026-02-20 - US-002
+Thread: https://ampcode.com/threads/T-019c7b4b-6997-74a9-a5cb-e6532ef0a03c
+- Implemented fetch to npm registry for latest n8n version, prints version to stdout
+- Error handling: stderr message + non-zero exit on failure
+- Uses built-in Node.js fetch (no external HTTP libs)
+- Files changed: src/index.ts, package.json, package-lock.json (added @types/node)
+- **Learnings for future iterations:**
+  - @types/node must be installed for `process` to typecheck — original scaffold didn't include it
+  - Node.js built-in `fetch` is available without imports in ES2022+ target
+  - Validate response shape with `unknown` type + narrowing to stay strict-mode safe
+---
+
+## 2026-02-20 - US-003
+Thread: https://ampcode.com/threads/T-019c7b4b-6997-74a9-a5cb-e6532ef0a03c
+- Verified `npm run build && npm link` works — `n8nrel` command available globally
+- Compiled output includes shebang, runs with plain Node.js, no ts-node needed
+- No code changes required — US-001 and US-002 already set this up correctly
+- Files changed: none (verification only)
+- **Learnings for future iterations:**
+  - US-003 was satisfied by existing scaffolding from US-001; sometimes stories just need verification
+---
+
+## 2026-02-20 - US-004
+Thread: https://ampcode.com/threads/T-019c7b53-925c-74bb-add0-57dae862c090
+- Added `parseArgs()` function to parse `--beta` and `--next` flags from `process.argv`
+- URL tag is now dynamic: `https://registry.npmjs.org/n8n/${tag}` where tag is latest/beta/next
+- Error cases: both flags together → stderr + exit 1; unknown flags → usage hint + exit 1
+- Files changed: src/index.ts
+- **Learnings for future iterations:**
+  - `dist/` is in .gitignore — only commit source files, not compiled output
+  - `process.argv.slice(2)` gives CLI args after node and script path
+  - No arg-parsing library needed for simple flag handling — plain string filtering works
+---
+
+## 2026-02-22 - US-005
+Thread: https://ampcode.com/threads/T-019c8629-b296-742d-aba7-36fb293577d7
+- Added `--changelog` flag support; fetches GitHub release by tag `n8n@{version}`
+- Refactored `main()` into `fetchVersion()` and `fetchChangelog()` helpers
+- Changelog works standalone or combined with `--beta`/`--next`
+- GitHub API errors produce human-readable stderr messages + non-zero exit
+- Files changed: src/index.ts
+- **Learnings for future iterations:**
+  - n8n GitHub release tags use format `n8n@{version}` (e.g. `n8n@2.8.3`)
+  - GitHub releases API at `/releases/tags/{tag}` is the most direct way to fetch a specific release
+  - `Accept: application/vnd.github.v3+json` header is good practice for GitHub API calls
+  - Release body can be `null` — handle with nullish coalescing
+---
