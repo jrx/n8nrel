@@ -120,3 +120,17 @@ Started: 2026-07-01
   - `fetchJson` error uses `new URL(url).hostname` for the host in the message (e.g. "api.github.com returned 404 Not Found")
   - Keep wrapper functions thin - the original per-function error specificity is less important than a clean abstraction
 ---
+
+## [2026-07-01] - harden-cli - 2. Argument validation and help
+- Added `USAGE` constant (replaces inline usage string duplicated across error messages)
+- Added `--help`/`-h` handling at the top of `parseArgs` before any other validation: prints usage to stdout, exits 0; `--help` takes precedence over other flags
+- Added positional-argument rejection (tokens not starting with `-`): stderr + exit 1
+- Added `--flag=value` form rejection (tokens containing `=`): stderr + exit 1
+- Existing conflict rules and unknown-flag check unchanged; updated usage string printed there too
+- Files changed: `src/index.ts`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - `--help`/`-h` check must be the very first thing in `parseArgs` (before positional/equals checks)
+  - Positional check: `args.filter(a => !a.startsWith("-"))` — catches bare words; `-h` passes because it starts with `-`
+  - Equals check: `args.filter(a => a.includes("="))` — catches `--flag=value` before the known-set lookup
+  - Factoring `USAGE` into a const avoids string drift across four separate error paths
+---

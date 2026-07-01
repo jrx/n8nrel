@@ -18,13 +18,13 @@
 
 ## 2. Argument validation and help
 
-- [ ] 2.1 In `parseArgs`, treat `--help` and `-h` as a request to print the
+- [x] 2.1 In `parseArgs`, treat `--help` and `-h` as a request to print the
       usage string to stdout and exit 0, before any other validation.
-- [ ] 2.2 Reject positional arguments (tokens not starting with `-`) with the
+- [x] 2.2 Reject positional arguments (tokens not starting with `-`) with the
       usage string on stderr and a non-zero exit.
-- [ ] 2.3 Reject the `--flag=value` form (any token containing `=`) as an
+- [x] 2.3 Reject the `--flag=value` form (any token containing `=`) as an
       unknown flag with the usage string on stderr and a non-zero exit.
-- [ ] 2.4 Keep the existing conflict rules (`--beta`/`--next`, `--helm`,
+- [x] 2.4 Keep the existing conflict rules (`--beta`/`--next`, `--helm`,
       `--terraform`) unchanged.
 
 ## 3. Changelog printing helper

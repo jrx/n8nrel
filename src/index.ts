@@ -9,14 +9,37 @@ interface ParsedArgs {
   terraform: boolean;
 }
 
+const USAGE = "Usage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--help]";
+
 function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
-  const flags = args.filter((a) => a.startsWith("--"));
+
+  // 2.1: --help / -h take precedence over everything else
+  if (args.includes("--help") || args.includes("-h")) {
+    process.stdout.write(`${USAGE}\n`);
+    process.exit(0);
+  }
+
+  // 2.2: Reject positional arguments (tokens not starting with -)
+  const positional = args.filter((a) => !a.startsWith("-"));
+  if (positional.length > 0) {
+    process.stderr.write(`Unknown argument: ${positional[0]}\n${USAGE}\n`);
+    process.exit(1);
+  }
+
+  // 2.3: Reject --flag=value form (any token containing =)
+  const withEquals = args.filter((a) => a.includes("="));
+  if (withEquals.length > 0) {
+    process.stderr.write(`Unknown flag: ${withEquals[0]}\n${USAGE}\n`);
+    process.exit(1);
+  }
+
+  const flags = args;
   const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform"]);
   const unknown = flags.filter((f) => !known.has(f));
 
   if (unknown.length > 0) {
-    process.stderr.write(`Unknown flag: ${unknown[0]}\nUsage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform]\n`);
+    process.stderr.write(`Unknown flag: ${unknown[0]}\n${USAGE}\n`);
     process.exit(1);
   }
 
