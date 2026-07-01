@@ -106,3 +106,17 @@ Started: 2026-07-01
 - **Learnings for future iterations:**
   - Verification section is straightforward when preceding sections completed the impl; run live smoke tests, validate, check off tasks
 ---
+
+## [2026-07-01] - harden-cli - 1. Shared network helpers
+- Added `USER_AGENT = "n8nrel/1.0.0"` constant used on every request
+- Added `fetchJson(url, extraHeaders?)` with User-Agent, AbortSignal.timeout(10_000), ok-check, returns parsed JSON
+- Added `fetchGitHubRelease(url)` on top of fetchJson with GitHub Accept header and shape validation
+- Rewrote all five fetch functions (fetchVersion, fetchChangelog, fetchHelmChartRelease, fetchTerraformModuleVersion, fetchTerraformChangelog) to delegate to the shared helpers
+- Timeout aborts are propagated through main().catch as "Error: This operation was aborted" (built-in AbortError message)
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - `AbortSignal.timeout(ms)` is available in Node 17.3+ and works with fetch; no polyfill needed
+  - `fetchGitHubRelease` wraps `fetchJson` with Accept header and shape validation; all GitHub calls go through it
+  - `fetchJson` error uses `new URL(url).hostname` for the host in the message (e.g. "api.github.com returned 404 Not Found")
+  - Keep wrapper functions thin - the original per-function error specificity is less important than a clean abstraction
+---
