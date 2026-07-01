@@ -134,3 +134,25 @@ Started: 2026-07-01
   - Equals check: `args.filter(a => a.includes("="))` — catches `--flag=value` before the known-set lookup
   - Factoring `USAGE` into a const avoids string drift across four separate error paths
 ---
+
+## [2026-07-01] - harden-cli - 3. Changelog printing helper
+- Added `printRelease({ tagName, body })` function above `main`
+- Replaced all three identical changelog-print blocks (terraform, helm, default) with calls to the helper
+- Files changed: `src/index.ts`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - The three branches had identical `console.log(release.tagName); if (release.body)` patterns; helper reduces to one place
+  - TypeScript infers the parameter type from the destructured shape; explicit `{ tagName: string; body: string }` annotation needed since the helper is standalone
+---
+
+## [2026-07-01] - harden-cli - 4. Tests
+- Exported `parseArgs` from `src/index.ts`; guarded `main()` call with `require.main === module` to prevent execution on import
+- Added `src/index.test.ts` with 19 `node:test` + `node:assert` unit tests covering: default tag, --beta, --next, --changelog, --helm, --terraform, all conflict rules, --help/-h (exit 0 + stdout), --flag=value rejection, positional-arg rejection, unknown-flag rejection
+- Added `"test": "node --test dist/index.test.js"` script to `package.json`
+- Confirmed `init.sh` test detection works: test script is non-placeholder so init.sh runs it
+- Files changed: `src/index.ts`, `src/index.test.ts`, `package.json`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - `require.main === module` is the CJS guard for "only run when invoked directly" - works because tsconfig module=Node16 + no "type":"module" outputs CJS
+  - `t.mock.method(obj, 'methodName', fn)` in `node:test` auto-restores after each test; throw inside the mock to simulate process.exit
+  - Test the compiled dist output directly with `node --test dist/index.test.js`; no transpile-on-the-fly needed
+  - `mock.method` returns a MockFunctionContext; mocking process.exit requires throwing to stop execution since TypeScript types it as `never`
+---

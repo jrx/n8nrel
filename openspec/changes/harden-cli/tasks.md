@@ -37,15 +37,15 @@
 
 ## 4. Tests
 
-- [ ] 4.1 Export or otherwise expose `parseArgs` so it can be imported by tests
+- [x] 4.1 Export or otherwise expose `parseArgs` so it can be imported by tests
       without triggering `main`.
-- [ ] 4.2 Add `node:test` + `node:assert` unit tests for `parseArgs`: default
+- [x] 4.2 Add `node:test` + `node:assert` unit tests for `parseArgs`: default
       tag, `--beta`, `--next`, `--changelog`, `--helm`, `--terraform`, each
       conflict rule, `--flag=value` rejection, positional-arg rejection, and
       unknown-flag rejection.
-- [ ] 4.3 Add a `test` script to `package.json` (for example
+- [x] 4.3 Add a `test` script to `package.json` (for example
       `node --test`) that runs the tests against the built or transpiled output.
-- [ ] 4.4 Confirm `init.sh` now runs the tests (its `test` detection already
+- [x] 4.4 Confirm `init.sh` now runs the tests (its `test` detection already
       excludes the npm placeholder).
 
 ## 5. Docs and verification

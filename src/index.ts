@@ -190,8 +190,12 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : String(err);
-  process.stderr.write(`Error: ${message}\n`);
-  process.exit(1);
-});
+export { parseArgs };
+
+if (require.main === module) {
+  main().catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`Error: ${message}\n`);
+    process.exit(1);
+  });
+}
