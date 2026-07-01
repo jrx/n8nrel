@@ -50,7 +50,7 @@
 
 ## 5. Docs and verification
 
-- [ ] 5.1 Document `--help`/`-h` in `README.md`.
-- [ ] 5.2 Run `npm run typecheck`, `npm run build`, and `npm test`.
-- [ ] 5.3 Manually verify `--changelog`, `--helm`, and `--terraform --changelog`
+- [x] 5.1 Document `--help`/`-h` in `README.md`.
+- [x] 5.2 Run `npm run typecheck`, `npm run build`, and `npm test`.
+- [x] 5.3 Manually verify `--changelog`, `--helm`, and `--terraform --changelog`
       succeed (User-Agent fix) and that `n8nrel --help` prints usage.
