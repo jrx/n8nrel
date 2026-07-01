@@ -98,3 +98,11 @@ Started: 2026-07-01
   - README flags table is a useful quick-reference pattern for CLI tools
   - PRD phases follow the same structure: hypothesis/requirement/acceptance criteria/considerations
 ---
+
+## [2026-07-01] - add-terraform-module-version - 5. Verification
+- Smoke-tested all three scenarios: `--terraform` → `0.1.0` (exit 0), `--terraform --changelog` → tag + release notes (exit 0), `--terraform --helm` → error (exit 1)
+- `npm run typecheck` clean; `openspec validate add-terraform-module-version --strict` passes
+- Files changed: `openspec/changes/add-terraform-module-version/tasks.md`
+- **Learnings for future iterations:**
+  - Verification section is straightforward when preceding sections completed the impl; run live smoke tests, validate, check off tasks
+---

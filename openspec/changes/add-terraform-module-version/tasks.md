@@ -32,9 +32,9 @@
 
 ## 5. Verification
 
-- [ ] 5.1 Run `n8nrel --terraform` and confirm it prints the module version
+- [x] 5.1 Run `n8nrel --terraform` and confirm it prints the module version
       (for example `0.1.0`)
-- [ ] 5.2 Run `n8nrel --terraform --changelog` and confirm it prints the tag
+- [x] 5.2 Run `n8nrel --terraform --changelog` and confirm it prints the tag
       plus release notes
-- [ ] 5.3 Run `n8nrel --terraform --helm` and confirm it errors with a non-zero
+- [x] 5.3 Run `n8nrel --terraform --helm` and confirm it errors with a non-zero
       exit code
