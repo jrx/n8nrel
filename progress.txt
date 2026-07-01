@@ -106,3 +106,64 @@ Started: 2026-07-01
 - **Learnings for future iterations:**
   - Verification section is straightforward when preceding sections completed the impl; run live smoke tests, validate, check off tasks
 ---
+
+## [2026-07-01] - harden-cli - 1. Shared network helpers
+- Added `USER_AGENT = "n8nrel/1.0.0"` constant used on every request
+- Added `fetchJson(url, extraHeaders?)` with User-Agent, AbortSignal.timeout(10_000), ok-check, returns parsed JSON
+- Added `fetchGitHubRelease(url)` on top of fetchJson with GitHub Accept header and shape validation
+- Rewrote all five fetch functions (fetchVersion, fetchChangelog, fetchHelmChartRelease, fetchTerraformModuleVersion, fetchTerraformChangelog) to delegate to the shared helpers
+- Timeout aborts are propagated through main().catch as "Error: This operation was aborted" (built-in AbortError message)
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - `AbortSignal.timeout(ms)` is available in Node 17.3+ and works with fetch; no polyfill needed
+  - `fetchGitHubRelease` wraps `fetchJson` with Accept header and shape validation; all GitHub calls go through it
+  - `fetchJson` error uses `new URL(url).hostname` for the host in the message (e.g. "api.github.com returned 404 Not Found")
+  - Keep wrapper functions thin - the original per-function error specificity is less important than a clean abstraction
+---
+
+## [2026-07-01] - harden-cli - 2. Argument validation and help
+- Added `USAGE` constant (replaces inline usage string duplicated across error messages)
+- Added `--help`/`-h` handling at the top of `parseArgs` before any other validation: prints usage to stdout, exits 0; `--help` takes precedence over other flags
+- Added positional-argument rejection (tokens not starting with `-`): stderr + exit 1
+- Added `--flag=value` form rejection (tokens containing `=`): stderr + exit 1
+- Existing conflict rules and unknown-flag check unchanged; updated usage string printed there too
+- Files changed: `src/index.ts`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - `--help`/`-h` check must be the very first thing in `parseArgs` (before positional/equals checks)
+  - Positional check: `args.filter(a => !a.startsWith("-"))` — catches bare words; `-h` passes because it starts with `-`
+  - Equals check: `args.filter(a => a.includes("="))` — catches `--flag=value` before the known-set lookup
+  - Factoring `USAGE` into a const avoids string drift across four separate error paths
+---
+
+## [2026-07-01] - harden-cli - 3. Changelog printing helper
+- Added `printRelease({ tagName, body })` function above `main`
+- Replaced all three identical changelog-print blocks (terraform, helm, default) with calls to the helper
+- Files changed: `src/index.ts`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - The three branches had identical `console.log(release.tagName); if (release.body)` patterns; helper reduces to one place
+  - TypeScript infers the parameter type from the destructured shape; explicit `{ tagName: string; body: string }` annotation needed since the helper is standalone
+---
+
+## [2026-07-01] - harden-cli - 4. Tests
+- Exported `parseArgs` from `src/index.ts`; guarded `main()` call with `require.main === module` to prevent execution on import
+- Added `src/index.test.ts` with 19 `node:test` + `node:assert` unit tests covering: default tag, --beta, --next, --changelog, --helm, --terraform, all conflict rules, --help/-h (exit 0 + stdout), --flag=value rejection, positional-arg rejection, unknown-flag rejection
+- Added `"test": "node --test dist/index.test.js"` script to `package.json`
+- Confirmed `init.sh` test detection works: test script is non-placeholder so init.sh runs it
+- Files changed: `src/index.ts`, `src/index.test.ts`, `package.json`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - `require.main === module` is the CJS guard for "only run when invoked directly" - works because tsconfig module=Node16 + no "type":"module" outputs CJS
+  - `t.mock.method(obj, 'methodName', fn)` in `node:test` auto-restores after each test; throw inside the mock to simulate process.exit
+  - Test the compiled dist output directly with `node --test dist/index.test.js`; no transpile-on-the-fly needed
+  - `mock.method` returns a MockFunctionContext; mocking process.exit requires throwing to stop execution since TypeScript types it as `never`
+---
+
+## [2026-07-01] - harden-cli - 5. Docs and verification
+- Added `--help`/`-h` to usage line and flags table in README.md
+- Ran `npm run typecheck`, `npm run build`, `npm test` — all 19 tests pass
+- Live smoke tests confirmed: `--changelog` (exit 0), `--helm` (exit 0), `--terraform --changelog` (exit 0), `--help` prints usage (exit 0)
+- `openspec validate harden-cli --strict` passes
+- Files changed: `README.md`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - Docs-only sections are fast: update README, run checks, validate, commit
+  - Live smoke tests for network-dependent flags confirm User-Agent header is working (no 403s)
+---

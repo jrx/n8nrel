@@ -17,7 +17,7 @@ After `npm link`, `n8nrel` is available anywhere in your terminal.
 ## Usage
 
 ```
-n8nrel [--beta | --next] [--changelog] [--helm] [--terraform]
+n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--help]
 ```
 
 ### n8n npm package (default)
@@ -104,3 +104,4 @@ n8nrel --terraform --changelog
 | `--changelog` | Also print the GitHub release notes |
 | `--helm` | Look up the latest n8n Helm chart version |
 | `--terraform` | Look up the latest n8n AWS Terraform module version |
+| `--help`, `-h` | Print the usage string and exit |

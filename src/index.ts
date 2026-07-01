@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+const USER_AGENT = "n8nrel/1.0.0";
+
 interface ParsedArgs {
   tag: string;
   changelog: boolean;
@@ -7,14 +9,37 @@ interface ParsedArgs {
   terraform: boolean;
 }
 
+const USAGE = "Usage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--help]";
+
 function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
-  const flags = args.filter((a) => a.startsWith("--"));
+
+  // 2.1: --help / -h take precedence over everything else
+  if (args.includes("--help") || args.includes("-h")) {
+    process.stdout.write(`${USAGE}\n`);
+    process.exit(0);
+  }
+
+  // 2.2: Reject positional arguments (tokens not starting with -)
+  const positional = args.filter((a) => !a.startsWith("-"));
+  if (positional.length > 0) {
+    process.stderr.write(`Unknown argument: ${positional[0]}\n${USAGE}\n`);
+    process.exit(1);
+  }
+
+  // 2.3: Reject --flag=value form (any token containing =)
+  const withEquals = args.filter((a) => a.includes("="));
+  if (withEquals.length > 0) {
+    process.stderr.write(`Unknown flag: ${withEquals[0]}\n${USAGE}\n`);
+    process.exit(1);
+  }
+
+  const flags = args;
   const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform"]);
   const unknown = flags.filter((f) => !known.has(f));
 
   if (unknown.length > 0) {
-    process.stderr.write(`Unknown flag: ${unknown[0]}\nUsage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform]\n`);
+    process.stderr.write(`Unknown flag: ${unknown[0]}\n${USAGE}\n`);
     process.exit(1);
   }
 
@@ -43,14 +68,38 @@ function parseArgs(argv: string[]): ParsedArgs {
   return { tag, changelog, helm, terraform };
 }
 
-async function fetchVersion(tag: string): Promise<string> {
-  const response = await fetch(`https://registry.npmjs.org/n8n/${tag}`);
+async function fetchJson(url: string, extraHeaders: Record<string, string> = {}): Promise<unknown> {
+  const response = await fetch(url, {
+    headers: { "User-Agent": USER_AGENT, ...extraHeaders },
+    signal: AbortSignal.timeout(10_000),
+  });
 
   if (!response.ok) {
-    throw new Error(`npm registry returned ${response.status} ${response.statusText}`);
+    throw new Error(`${new URL(url).hostname} returned ${response.status} ${response.statusText}`);
   }
 
-  const data: unknown = await response.json();
+  return response.json() as Promise<unknown>;
+}
+
+async function fetchGitHubRelease(url: string): Promise<{ tagName: string; body: string }> {
+  const data = await fetchJson(url, { Accept: "application/vnd.github.v3+json" });
+
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("tag_name" in data) ||
+    !("body" in data) ||
+    typeof (data as { tag_name: unknown }).tag_name !== "string"
+  ) {
+    throw new Error("Unexpected response from GitHub API: missing release fields");
+  }
+
+  const release = data as { tag_name: string; body: string | null };
+  return { tagName: release.tag_name, body: release.body ?? "" };
+}
+
+async function fetchVersion(tag: string): Promise<string> {
+  const data = await fetchJson(`https://registry.npmjs.org/n8n/${tag}`);
 
   if (typeof data !== "object" || data === null || !("version" in data)) {
     throw new Error("Unexpected response from npm registry: missing version field");
@@ -68,67 +117,19 @@ async function fetchVersion(tag: string): Promise<string> {
 async function fetchChangelog(version: string): Promise<{ tagName: string; body: string }> {
   const tagName = `n8n@${version}`;
   const url = `https://api.github.com/repos/n8n-io/n8n/releases/tags/${tagName}`;
-  const response = await fetch(url, {
-    headers: { Accept: "application/vnd.github.v3+json" },
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub API returned ${response.status} ${response.statusText} for tag ${tagName}`);
-  }
-
-  const data: unknown = await response.json();
-
-  if (typeof data !== "object" || data === null || !("body" in data) || !("tag_name" in data)) {
-    throw new Error("Unexpected response from GitHub API: missing release fields");
-  }
-
-  const release = data as { tag_name: string; body: string | null };
-  return { tagName: release.tag_name, body: release.body ?? "" };
+  return fetchGitHubRelease(url);
 }
 
 async function fetchHelmChartRelease(): Promise<{ version: string; tagName: string; body: string }> {
   const url = "https://api.github.com/repos/n8n-io/n8n-hosting/releases/latest";
-  const response = await fetch(url, {
-    headers: { Accept: "application/vnd.github.v3+json" },
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub API returned ${response.status} ${response.statusText} for n8n-hosting latest release`);
-  }
-
-  const data: unknown = await response.json();
-
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("tag_name" in data) ||
-    !("body" in data)
-  ) {
-    throw new Error("Unexpected response from GitHub API: missing release fields");
-  }
-
-  const release = data as { tag_name: string; body: string | null };
-
-  if (typeof release.tag_name !== "string" || release.tag_name.length === 0) {
-    throw new Error("Unexpected response from GitHub API: tag_name is not a string");
-  }
-
-  const tagName = release.tag_name;
-  const version = tagName.startsWith("v") ? tagName.slice(1) : tagName;
-  return { version, tagName, body: release.body ?? "" };
+  const release = await fetchGitHubRelease(url);
+  const version = release.tagName.startsWith("v") ? release.tagName.slice(1) : release.tagName;
+  return { version, tagName: release.tagName, body: release.body };
 }
 
 async function fetchTerraformModuleVersion(): Promise<string> {
   const url = "https://registry.terraform.io/v1/modules/n8n-io/n8n/aws";
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Terraform Registry returned ${response.status} ${response.statusText}`);
-  }
-
-  const data: unknown = await response.json();
+  const data = await fetchJson(url, { Accept: "application/json" });
 
   if (typeof data !== "object" || data === null || !("version" in data)) {
     throw new Error("Unexpected response from Terraform Registry: missing version field");
@@ -145,27 +146,14 @@ async function fetchTerraformModuleVersion(): Promise<string> {
 
 async function fetchTerraformChangelog(version: string): Promise<{ tagName: string; body: string }> {
   const url = `https://api.github.com/repos/n8n-io/terraform-aws-n8n/releases/tags/${version}`;
-  const response = await fetch(url, {
-    headers: { Accept: "application/vnd.github.v3+json" },
-  });
+  return fetchGitHubRelease(url);
+}
 
-  if (!response.ok) {
-    throw new Error(`GitHub API returned ${response.status} ${response.statusText} for terraform-aws-n8n tag ${version}`);
+function printRelease({ tagName, body }: { tagName: string; body: string }): void {
+  console.log(tagName);
+  if (body) {
+    console.log(body);
   }
-
-  const data: unknown = await response.json();
-
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("tag_name" in data) ||
-    !("body" in data)
-  ) {
-    throw new Error("Unexpected response from GitHub API: missing release fields");
-  }
-
-  const release = data as { tag_name: string; body: string | null };
-  return { tagName: release.tag_name, body: release.body ?? "" };
 }
 
 async function main(): Promise<void> {
@@ -175,10 +163,7 @@ async function main(): Promise<void> {
     const version = await fetchTerraformModuleVersion();
     if (changelog) {
       const release = await fetchTerraformChangelog(version);
-      console.log(release.tagName);
-      if (release.body) {
-        console.log(release.body);
-      }
+      printRelease(release);
     } else {
       console.log(version);
     }
@@ -188,10 +173,7 @@ async function main(): Promise<void> {
   if (helm) {
     const release = await fetchHelmChartRelease();
     if (changelog) {
-      console.log(release.tagName);
-      if (release.body) {
-        console.log(release.body);
-      }
+      printRelease(release);
     } else {
       console.log(release.version);
     }
@@ -202,17 +184,18 @@ async function main(): Promise<void> {
 
   if (changelog) {
     const release = await fetchChangelog(version);
-    console.log(release.tagName);
-    if (release.body) {
-      console.log(release.body);
-    }
+    printRelease(release);
   } else {
     console.log(version);
   }
 }
 
-main().catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : String(err);
-  process.stderr.write(`Error: ${message}\n`);
-  process.exit(1);
-});
+export { parseArgs };
+
+if (require.main === module) {
+  main().catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    process.stderr.write(`Error: ${message}\n`);
+    process.exit(1);
+  });
+}
