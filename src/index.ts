@@ -118,6 +118,56 @@ async function fetchHelmChartRelease(): Promise<{ version: string; tagName: stri
   return { version, tagName, body: release.body ?? "" };
 }
 
+async function fetchTerraformModuleVersion(): Promise<string> {
+  const url = "https://registry.terraform.io/v1/modules/n8n-io/n8n/aws";
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Terraform Registry returned ${response.status} ${response.statusText}`);
+  }
+
+  const data: unknown = await response.json();
+
+  if (typeof data !== "object" || data === null || !("version" in data)) {
+    throw new Error("Unexpected response from Terraform Registry: missing version field");
+  }
+
+  const { version } = data as { version: string };
+
+  if (typeof version !== "string" || version.length === 0) {
+    throw new Error("Unexpected response from Terraform Registry: version is not a string");
+  }
+
+  return version;
+}
+
+async function fetchTerraformChangelog(version: string): Promise<{ tagName: string; body: string }> {
+  const url = `https://api.github.com/repos/n8n-io/terraform-aws-n8n/releases/tags/${version}`;
+  const response = await fetch(url, {
+    headers: { Accept: "application/vnd.github.v3+json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub API returned ${response.status} ${response.statusText} for terraform-aws-n8n tag ${version}`);
+  }
+
+  const data: unknown = await response.json();
+
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("tag_name" in data) ||
+    !("body" in data)
+  ) {
+    throw new Error("Unexpected response from GitHub API: missing release fields");
+  }
+
+  const release = data as { tag_name: string; body: string | null };
+  return { tagName: release.tag_name, body: release.body ?? "" };
+}
+
 async function main(): Promise<void> {
   const { tag, changelog, helm, terraform } = parseArgs(process.argv);
 

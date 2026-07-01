@@ -8,12 +8,12 @@
 
 ## 2. Terraform module fetch
 
-- [ ] 2.1 Add a function that fetches `/v1/modules/n8n-io/n8n/aws` from the
+- [x] 2.1 Add a function that fetches `/v1/modules/n8n-io/n8n/aws` from the
       Terraform Registry and returns the `version` field, validating the
       response shape
-- [ ] 2.2 Throw a descriptive error including the status on a non-success
+- [x] 2.2 Throw a descriptive error including the status on a non-success
       response
-- [ ] 2.3 Add a function that fetches the `n8n-io/terraform-aws-n8n` GitHub
+- [x] 2.3 Add a function that fetches the `n8n-io/terraform-aws-n8n` GitHub
       release for a given tag (the version, no `v` prefix) and returns the tag
       and body
 
