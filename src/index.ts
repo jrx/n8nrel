@@ -79,6 +79,38 @@ async function fetchChangelog(version: string): Promise<{ tagName: string; body:
   return { tagName: release.tag_name, body: release.body ?? "" };
 }
 
+async function fetchHelmChartRelease(): Promise<{ version: string; tagName: string; body: string }> {
+  const url = "https://api.github.com/repos/n8n-io/n8n-hosting/releases/latest";
+  const response = await fetch(url, {
+    headers: { Accept: "application/vnd.github.v3+json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub API returned ${response.status} ${response.statusText} for n8n-hosting latest release`);
+  }
+
+  const data: unknown = await response.json();
+
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("tag_name" in data) ||
+    !("body" in data)
+  ) {
+    throw new Error("Unexpected response from GitHub API: missing release fields");
+  }
+
+  const release = data as { tag_name: string; body: string | null };
+
+  if (typeof release.tag_name !== "string" || release.tag_name.length === 0) {
+    throw new Error("Unexpected response from GitHub API: tag_name is not a string");
+  }
+
+  const tagName = release.tag_name;
+  const version = tagName.startsWith("v") ? tagName.slice(1) : tagName;
+  return { version, tagName, body: release.body ?? "" };
+}
+
 async function main(): Promise<void> {
   const { tag, changelog } = parseArgs(process.argv);
   const version = await fetchVersion(tag);

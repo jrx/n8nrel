@@ -8,13 +8,13 @@
 
 ## 2. Helm chart fetch
 
-- [ ] 2.1 Add a function that fetches the latest release of
+- [x] 2.1 Add a function that fetches the latest release of
       `n8n-io/n8n-hosting` from the GitHub REST API
       (`/repos/n8n-io/n8n-hosting/releases/latest`)
-- [ ] 2.2 Return the release `tag_name` and `body`, validating the response
+- [x] 2.2 Return the release `tag_name` and `body`, validating the response
       shape
-- [ ] 2.3 Strip the leading `v` from the tag when producing the version string
-- [ ] 2.4 Throw a descriptive error including the status on a non-success
+- [x] 2.3 Strip the leading `v` from the tag when producing the version string
+- [x] 2.4 Throw a descriptive error including the status on a non-success
       response
 
 ## 3. Wire into main
