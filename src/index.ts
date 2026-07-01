@@ -149,6 +149,13 @@ async function fetchTerraformChangelog(version: string): Promise<{ tagName: stri
   return fetchGitHubRelease(url);
 }
 
+function printRelease({ tagName, body }: { tagName: string; body: string }): void {
+  console.log(tagName);
+  if (body) {
+    console.log(body);
+  }
+}
+
 async function main(): Promise<void> {
   const { tag, changelog, helm, terraform } = parseArgs(process.argv);
 
@@ -156,10 +163,7 @@ async function main(): Promise<void> {
     const version = await fetchTerraformModuleVersion();
     if (changelog) {
       const release = await fetchTerraformChangelog(version);
-      console.log(release.tagName);
-      if (release.body) {
-        console.log(release.body);
-      }
+      printRelease(release);
     } else {
       console.log(version);
     }
@@ -169,10 +173,7 @@ async function main(): Promise<void> {
   if (helm) {
     const release = await fetchHelmChartRelease();
     if (changelog) {
-      console.log(release.tagName);
-      if (release.body) {
-        console.log(release.body);
-      }
+      printRelease(release);
     } else {
       console.log(release.version);
     }
@@ -183,10 +184,7 @@ async function main(): Promise<void> {
 
   if (changelog) {
     const release = await fetchChangelog(version);
-    console.log(release.tagName);
-    if (release.body) {
-      console.log(release.body);
-    }
+    printRelease(release);
   } else {
     console.log(version);
   }

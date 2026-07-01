@@ -29,10 +29,10 @@
 
 ## 3. Changelog printing helper
 
-- [ ] 3.1 Extract the repeated "print tag, then body if present" logic from the
+- [x] 3.1 Extract the repeated "print tag, then body if present" logic from the
       three branches of `main` into one helper (for example
       `printRelease({ tagName, body })`).
-- [ ] 3.2 Use the helper in the `--terraform`, `--helm`, and default changelog
+- [x] 3.2 Use the helper in the `--terraform`, `--helm`, and default changelog
       branches.
 
 ## 4. Tests
