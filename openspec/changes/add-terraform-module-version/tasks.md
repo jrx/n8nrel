@@ -19,10 +19,10 @@
 
 ## 3. Wire into main
 
-- [ ] 3.1 In `main`, branch on the `terraform` flag to use the module fetch path
-- [ ] 3.2 Print the version by default; print the tag plus release notes when
+- [x] 3.1 In `main`, branch on the `terraform` flag to use the module fetch path
+- [x] 3.2 Print the version by default; print the tag plus release notes when
       `--changelog` is set
-- [ ] 3.3 Preserve existing n8n npm and `--helm` behavior
+- [x] 3.3 Preserve existing n8n npm and `--helm` behavior
 
 ## 4. README
 

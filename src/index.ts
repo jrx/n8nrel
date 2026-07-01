@@ -171,6 +171,20 @@ async function fetchTerraformChangelog(version: string): Promise<{ tagName: stri
 async function main(): Promise<void> {
   const { tag, changelog, helm, terraform } = parseArgs(process.argv);
 
+  if (terraform) {
+    const version = await fetchTerraformModuleVersion();
+    if (changelog) {
+      const release = await fetchTerraformChangelog(version);
+      console.log(release.tagName);
+      if (release.body) {
+        console.log(release.body);
+      }
+    } else {
+      console.log(version);
+    }
+    return;
+  }
+
   if (helm) {
     const release = await fetchHelmChartRelease();
     if (changelog) {

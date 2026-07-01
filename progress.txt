@@ -68,3 +68,24 @@ Started: 2026-07-01
 - **Learnings for future iterations:**
   - New flag pattern identical to `--helm` addition; extend `known`, add interface field, add conflict guard, update usage string, destructure in main
 ---
+
+## [2026-07-01] - add-terraform-module-version - 2. Terraform module fetch
+- Added `fetchTerraformModuleVersion()` that hits `https://registry.terraform.io/v1/modules/n8n-io/n8n/aws`
+- Validates response shape (presence and type of `version`), throws with status on non-success
+- Added `fetchTerraformChangelog(version)` that fetches the `n8n-io/terraform-aws-n8n` GitHub release by tag (no `v` prefix)
+- Files changed: `src/index.ts`, `openspec/changes/add-terraform-module-version/tasks.md`
+- **Learnings for future iterations:**
+  - Terraform Registry base URL: `https://registry.terraform.io`; version is returned verbatim (no `v` prefix to strip)
+  - terraform-aws-n8n release tags use no `v` prefix (e.g. `0.1.0`), unlike n8n-hosting which uses `v`-prefixed tags
+  - Pattern is identical to `fetchHelmChartRelease` / `fetchChangelog`; just different URLs and no prefix stripping
+---
+
+## [2026-07-01] - add-terraform-module-version - 3. Wire into main
+- Branched on `terraform` flag in `main()` before the `helm` branch
+- `--terraform` calls `fetchTerraformModuleVersion()` and prints version; `--terraform --changelog` also calls `fetchTerraformChangelog()` and prints tag + notes
+- Early `return` preserves existing npm and helm paths unchanged
+- Files changed: `src/index.ts`, `openspec/changes/add-terraform-module-version/tasks.md`
+- **Learnings for future iterations:**
+  - terraform branch goes before helm branch; early return pattern keeps paths independent
+  - Live smoke tests: `--terraform` → `0.1.0` (exit 0), `--terraform --changelog` → tag + notes (exit 0), `--terraform --helm` → exit 1, `--terraform --beta` → exit 1
+---
