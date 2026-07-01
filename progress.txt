@@ -89,3 +89,12 @@ Started: 2026-07-01
   - terraform branch goes before helm branch; early return pattern keeps paths independent
   - Live smoke tests: `--terraform` → `0.1.0` (exit 0), `--terraform --changelog` → tag + notes (exit 0), `--terraform --helm` → exit 1, `--terraform --beta` → exit 1
 ---
+
+## [2026-07-01] - add-terraform-module-version - 4. README
+- Added `README.md` with install section and usage for all flags: default npm, `--beta`, `--next`, `--changelog`, `--helm`, `--terraform`
+- Updated `PRD.md` to add Phase 3 documenting the `--terraform` flag with acceptance criteria and considerations
+- Files changed: `README.md` (new), `PRD.md`
+- **Learnings for future iterations:**
+  - README flags table is a useful quick-reference pattern for CLI tools
+  - PRD phases follow the same structure: hypothesis/requirement/acceptance criteria/considerations
+---

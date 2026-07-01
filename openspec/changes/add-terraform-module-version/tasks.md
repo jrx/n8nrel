@@ -26,9 +26,9 @@
 
 ## 4. README
 
-- [ ] 4.1 Add `README.md` with an install section and usage for the default
+- [x] 4.1 Add `README.md` with an install section and usage for the default
       lookup and `--beta`, `--next`, `--changelog`, `--helm`, `--terraform`
-- [ ] 4.2 Update `PRD.md` to document the `--terraform` flag
+- [x] 4.2 Update `PRD.md` to document the `--terraform` flag
 
 ## 5. Verification
 
