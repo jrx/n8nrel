@@ -34,6 +34,7 @@ This returns a JSON payload whose `version` field contains the current stable ve
 | :---- | :---- |
 | **Phase 1:** Print the latest stable n8n version | CLI command `n8nrel` fetches and prints the latest stable version |
 | **Phase 2:** Helm chart version lookup | `--helm` flag fetches the latest n8n Helm chart version from `n8n-io/n8n-hosting` |
+| **Phase 3:** Terraform module version lookup | `--terraform` flag fetches the latest `n8n-io/n8n/aws` module version from the Terraform Registry |
 
 ### Phase 1: Print the latest stable n8n version
 
@@ -92,3 +93,24 @@ When `--helm` is passed, the tool makes an HTTP GET request to the GitHub REST A
 ##### Considerations
 
 1. The Helm chart release tags use `v`-prefixed semver (e.g. `v1.10.1`); the leading `v` is stripped for bare version output to stay consistent with the npm output format.
+
+### Phase 3: Terraform module version lookup
+
+Teams deploying n8n on AWS with Terraform track the official `n8n-io/n8n/aws` module on the Terraform Registry. Its version follows its own release cadence, independent of both the npm package and the Helm chart.
+
+#### Requirement 4: Fetch latest Terraform module version from the Terraform Registry
+
+When `--terraform` is passed, the tool makes an HTTP GET request to `https://registry.terraform.io/v1/modules/n8n-io/n8n/aws` and prints the `version` field verbatim.
+
+##### Acceptance Criteria
+
+1. Running `n8nrel --terraform` outputs the latest module version string (e.g. `0.1.0`) followed by a newline.
+2. Running `n8nrel --terraform --changelog` prints the release tag followed by the release notes from the `n8n-io/terraform-aws-n8n` GitHub repository.
+3. Running `n8nrel --terraform --helm`, `n8nrel --terraform --beta`, or `n8nrel --terraform --next` exits with a non-zero exit code and a descriptive error message.
+4. If the network request fails or the response is malformed, the tool prints a human-readable error to stderr and exits with a non-zero exit code.
+5. Existing `n8nrel` and `--helm` behavior is unchanged.
+
+##### Considerations
+
+1. The Terraform Registry module version uses plain semver with no prefix (e.g. `0.1.0`); no stripping is needed.
+2. The GitHub release tag for `terraform-aws-n8n` also has no `v` prefix, so the version from the registry is used directly as the tag.

@@ -4,16 +4,17 @@ interface ParsedArgs {
   tag: string;
   changelog: boolean;
   helm: boolean;
+  terraform: boolean;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
   const flags = args.filter((a) => a.startsWith("--"));
-  const known = new Set(["--beta", "--next", "--changelog", "--helm"]);
+  const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform"]);
   const unknown = flags.filter((f) => !known.has(f));
 
   if (unknown.length > 0) {
-    process.stderr.write(`Unknown flag: ${unknown[0]}\nUsage: n8nrel [--beta | --next] [--changelog] [--helm]\n`);
+    process.stderr.write(`Unknown flag: ${unknown[0]}\nUsage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform]\n`);
     process.exit(1);
   }
 
@@ -21,6 +22,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const hasNext = flags.includes("--next");
   const changelog = flags.includes("--changelog");
   const helm = flags.includes("--helm");
+  const terraform = flags.includes("--terraform");
 
   if (hasBeta && hasNext) {
     process.stderr.write("Error: --beta and --next cannot be used together\n");
@@ -32,8 +34,13 @@ function parseArgs(argv: string[]): ParsedArgs {
     process.exit(1);
   }
 
+  if (terraform && (helm || hasBeta || hasNext)) {
+    process.stderr.write("Error: --terraform cannot be used with --helm, --beta, or --next\n");
+    process.exit(1);
+  }
+
   const tag = hasBeta ? "beta" : hasNext ? "next" : "latest";
-  return { tag, changelog, helm };
+  return { tag, changelog, helm, terraform };
 }
 
 async function fetchVersion(tag: string): Promise<string> {
@@ -111,8 +118,72 @@ async function fetchHelmChartRelease(): Promise<{ version: string; tagName: stri
   return { version, tagName, body: release.body ?? "" };
 }
 
+async function fetchTerraformModuleVersion(): Promise<string> {
+  const url = "https://registry.terraform.io/v1/modules/n8n-io/n8n/aws";
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Terraform Registry returned ${response.status} ${response.statusText}`);
+  }
+
+  const data: unknown = await response.json();
+
+  if (typeof data !== "object" || data === null || !("version" in data)) {
+    throw new Error("Unexpected response from Terraform Registry: missing version field");
+  }
+
+  const { version } = data as { version: string };
+
+  if (typeof version !== "string" || version.length === 0) {
+    throw new Error("Unexpected response from Terraform Registry: version is not a string");
+  }
+
+  return version;
+}
+
+async function fetchTerraformChangelog(version: string): Promise<{ tagName: string; body: string }> {
+  const url = `https://api.github.com/repos/n8n-io/terraform-aws-n8n/releases/tags/${version}`;
+  const response = await fetch(url, {
+    headers: { Accept: "application/vnd.github.v3+json" },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub API returned ${response.status} ${response.statusText} for terraform-aws-n8n tag ${version}`);
+  }
+
+  const data: unknown = await response.json();
+
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    !("tag_name" in data) ||
+    !("body" in data)
+  ) {
+    throw new Error("Unexpected response from GitHub API: missing release fields");
+  }
+
+  const release = data as { tag_name: string; body: string | null };
+  return { tagName: release.tag_name, body: release.body ?? "" };
+}
+
 async function main(): Promise<void> {
-  const { tag, changelog, helm } = parseArgs(process.argv);
+  const { tag, changelog, helm, terraform } = parseArgs(process.argv);
+
+  if (terraform) {
+    const version = await fetchTerraformModuleVersion();
+    if (changelog) {
+      const release = await fetchTerraformChangelog(version);
+      console.log(release.tagName);
+      if (release.body) {
+        console.log(release.body);
+      }
+    } else {
+      console.log(version);
+    }
+    return;
+  }
 
   if (helm) {
     const release = await fetchHelmChartRelease();

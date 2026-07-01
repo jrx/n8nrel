@@ -57,3 +57,52 @@ Started: 2026-07-01
 - **Learnings for future iterations:**
   - Verification task sections are quick when preceding sections left the impl complete; just run the scenarios and document in PRD
 ---
+
+## [2026-07-01] - add-terraform-module-version - 1. Argument parsing
+- Added `--terraform` to the `known` set in `parseArgs`
+- Extended `ParsedArgs` interface with `terraform: boolean`
+- Added conflict check: `--terraform` with `--helm`, `--beta`, or `--next` exits 1 with error message
+- Updated usage string to include `[--terraform]`
+- Destructured `terraform` in `main()` to avoid unused-variable type error
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - New flag pattern identical to `--helm` addition; extend `known`, add interface field, add conflict guard, update usage string, destructure in main
+---
+
+## [2026-07-01] - add-terraform-module-version - 2. Terraform module fetch
+- Added `fetchTerraformModuleVersion()` that hits `https://registry.terraform.io/v1/modules/n8n-io/n8n/aws`
+- Validates response shape (presence and type of `version`), throws with status on non-success
+- Added `fetchTerraformChangelog(version)` that fetches the `n8n-io/terraform-aws-n8n` GitHub release by tag (no `v` prefix)
+- Files changed: `src/index.ts`, `openspec/changes/add-terraform-module-version/tasks.md`
+- **Learnings for future iterations:**
+  - Terraform Registry base URL: `https://registry.terraform.io`; version is returned verbatim (no `v` prefix to strip)
+  - terraform-aws-n8n release tags use no `v` prefix (e.g. `0.1.0`), unlike n8n-hosting which uses `v`-prefixed tags
+  - Pattern is identical to `fetchHelmChartRelease` / `fetchChangelog`; just different URLs and no prefix stripping
+---
+
+## [2026-07-01] - add-terraform-module-version - 3. Wire into main
+- Branched on `terraform` flag in `main()` before the `helm` branch
+- `--terraform` calls `fetchTerraformModuleVersion()` and prints version; `--terraform --changelog` also calls `fetchTerraformChangelog()` and prints tag + notes
+- Early `return` preserves existing npm and helm paths unchanged
+- Files changed: `src/index.ts`, `openspec/changes/add-terraform-module-version/tasks.md`
+- **Learnings for future iterations:**
+  - terraform branch goes before helm branch; early return pattern keeps paths independent
+  - Live smoke tests: `--terraform` → `0.1.0` (exit 0), `--terraform --changelog` → tag + notes (exit 0), `--terraform --helm` → exit 1, `--terraform --beta` → exit 1
+---
+
+## [2026-07-01] - add-terraform-module-version - 4. README
+- Added `README.md` with install section and usage for all flags: default npm, `--beta`, `--next`, `--changelog`, `--helm`, `--terraform`
+- Updated `PRD.md` to add Phase 3 documenting the `--terraform` flag with acceptance criteria and considerations
+- Files changed: `README.md` (new), `PRD.md`
+- **Learnings for future iterations:**
+  - README flags table is a useful quick-reference pattern for CLI tools
+  - PRD phases follow the same structure: hypothesis/requirement/acceptance criteria/considerations
+---
+
+## [2026-07-01] - add-terraform-module-version - 5. Verification
+- Smoke-tested all three scenarios: `--terraform` → `0.1.0` (exit 0), `--terraform --changelog` → tag + release notes (exit 0), `--terraform --helm` → error (exit 1)
+- `npm run typecheck` clean; `openspec validate add-terraform-module-version --strict` passes
+- Files changed: `openspec/changes/add-terraform-module-version/tasks.md`
+- **Learnings for future iterations:**
+  - Verification section is straightforward when preceding sections completed the impl; run live smoke tests, validate, check off tasks
+---
