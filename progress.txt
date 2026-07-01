@@ -57,3 +57,14 @@ Started: 2026-07-01
 - **Learnings for future iterations:**
   - Verification task sections are quick when preceding sections left the impl complete; just run the scenarios and document in PRD
 ---
+
+## [2026-07-01] - add-terraform-module-version - 1. Argument parsing
+- Added `--terraform` to the `known` set in `parseArgs`
+- Extended `ParsedArgs` interface with `terraform: boolean`
+- Added conflict check: `--terraform` with `--helm`, `--beta`, or `--next` exits 1 with error message
+- Updated usage string to include `[--terraform]`
+- Destructured `terraform` in `main()` to avoid unused-variable type error
+- Files changed: `src/index.ts`
+- **Learnings for future iterations:**
+  - New flag pattern identical to `--helm` addition; extend `known`, add interface field, add conflict guard, update usage string, destructure in main
+---
