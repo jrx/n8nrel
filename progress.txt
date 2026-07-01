@@ -156,3 +156,14 @@ Started: 2026-07-01
   - Test the compiled dist output directly with `node --test dist/index.test.js`; no transpile-on-the-fly needed
   - `mock.method` returns a MockFunctionContext; mocking process.exit requires throwing to stop execution since TypeScript types it as `never`
 ---
+
+## [2026-07-01] - harden-cli - 5. Docs and verification
+- Added `--help`/`-h` to usage line and flags table in README.md
+- Ran `npm run typecheck`, `npm run build`, `npm test` — all 19 tests pass
+- Live smoke tests confirmed: `--changelog` (exit 0), `--helm` (exit 0), `--terraform --changelog` (exit 0), `--help` prints usage (exit 0)
+- `openspec validate harden-cli --strict` passes
+- Files changed: `README.md`, `openspec/changes/harden-cli/tasks.md`
+- **Learnings for future iterations:**
+  - Docs-only sections are fast: update README, run checks, validate, commit
+  - Live smoke tests for network-dependent flags confirm User-Agent header is working (no 403s)
+---
