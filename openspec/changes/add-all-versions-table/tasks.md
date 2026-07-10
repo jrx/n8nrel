@@ -10,16 +10,16 @@
 
 ## 2. Aggregate lookup and table
 
-- [ ] 2.1 Add a `fetchAllVersions` helper that starts the five lookups
+- [x] 2.1 Add a `fetchAllVersions` helper that starts the five lookups
       concurrently (stable, beta, next via `fetchVersion`; Helm via
       `fetchHelmChartRelease`; Terraform via `fetchTerraformModuleVersion`)
       using `Promise.allSettled` so one failure does not abort the others
-- [ ] 2.2 Map each settled result to a version string, using `n/a` for
+- [x] 2.2 Map each settled result to a version string, using `n/a` for
       rejected lookups
-- [ ] 2.3 Add a `formatVersionTable` helper that renders the five source/version
+- [x] 2.3 Add a `formatVersionTable` helper that renders the five source/version
       rows as a plain aligned two-column table (versions left-aligned at a
       common column)
-- [ ] 2.4 Unit-test `formatVersionTable` with a mix of resolved values and
+- [x] 2.4 Unit-test `formatVersionTable` with a mix of resolved values and
       `n/a`, asserting row order and alignment
 
 ## 3. Dispatch and docs

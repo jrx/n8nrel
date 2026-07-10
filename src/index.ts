@@ -166,6 +166,48 @@ function printRelease({ tagName, body }: { tagName: string; body: string }): voi
   }
 }
 
+interface AllVersions {
+  stable: string;
+  beta: string;
+  next: string;
+  helm: string;
+  terraform: string;
+}
+
+async function fetchAllVersions(): Promise<AllVersions> {
+  const [stable, beta, next, helm, terraform] = await Promise.allSettled([
+    fetchVersion("latest"),
+    fetchVersion("beta"),
+    fetchVersion("next"),
+    fetchHelmChartRelease().then((release) => release.version),
+    fetchTerraformModuleVersion(),
+  ]);
+
+  const resolve = (result: PromiseSettledResult<string>): string =>
+    result.status === "fulfilled" ? result.value : "n/a";
+
+  return {
+    stable: resolve(stable),
+    beta: resolve(beta),
+    next: resolve(next),
+    helm: resolve(helm),
+    terraform: resolve(terraform),
+  };
+}
+
+function formatVersionTable(versions: AllVersions): string {
+  const rows: Array<[string, string]> = [
+    ["stable", versions.stable],
+    ["beta", versions.beta],
+    ["next", versions.next],
+    ["helm", versions.helm],
+    ["terraform", versions.terraform],
+  ];
+
+  const labelWidth = Math.max(...rows.map(([label]) => label.length));
+  return rows.map(([label, version]) => `${label.padEnd(labelWidth + 2)}${version}`).join("\n");
+}
+
 async function main(): Promise<void> {
   const { tag, changelog, helm, terraform } = parseArgs(process.argv);
 
@@ -200,7 +242,7 @@ async function main(): Promise<void> {
   }
 }
 
-export { parseArgs };
+export { parseArgs, fetchAllVersions, formatVersionTable };
 
 if (require.main === module) {
   main().catch((err: unknown) => {

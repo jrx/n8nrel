@@ -180,3 +180,21 @@ Started: 2026-07-01
   - `main()` still only destructures `{ tag, changelog, helm, terraform }` from `parseArgs` result; dispatch logic for `all` is deferred to task 3 (aggregate lookup + table not implemented yet)
   - Build, typecheck, and all 25 tests pass after this section
 ---
+
+## [2026-07-10] - add-all-versions-table - 2. Aggregate lookup and table
+- Added `fetchAllVersions()`: runs `fetchVersion("latest"|"beta"|"next")`,
+  `fetchHelmChartRelease().then(r => r.version)`, and
+  `fetchTerraformModuleVersion()` via `Promise.allSettled`; maps rejected
+  results to `"n/a"`
+- Added `formatVersionTable(versions)`: renders stable/beta/next/helm/terraform
+  rows, label column padded to the longest label + 2 spaces so all version
+  values start at the same column
+- Exported `fetchAllVersions` and `formatVersionTable` alongside `parseArgs` for
+  unit testing
+- Added two unit tests: all-resolved values, and a mix of resolved + `n/a`;
+  both assert row order and that all version values start at the same column
+- Files changed: `src/index.ts`, `src/index.test.ts`
+- **Learnings for future iterations:**
+  - `Promise.allSettled` + a small `resolve()` helper (`status === "fulfilled" ? value : "n/a"`) is the clean pattern for "run N lookups, don't let one failure kill the rest"
+  - `main()` is not wired to `all` yet (that's section 3); `all` is destructured but unused in `main` until then, which is fine, no lint script exists to flag it
+  - Column alignment: `label.padEnd(maxLabelLength + 2)` is simplest; test by regex-matching the whitespace immediately before the trailing version token and asserting all rows have the same start index
