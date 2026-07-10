@@ -24,7 +24,7 @@
 
 ## 3. Dispatch and docs
 
-- [ ] 3.1 Handle `all` in `main`: fetch, format, print the table, exit 0
-- [ ] 3.2 Document `--all` in `README.md` (usage section and flags table)
-- [ ] 3.3 Run `npm run build`, `npm run typecheck`, and `npm test`; confirm all
+- [x] 3.1 Handle `all` in `main`: fetch, format, print the table, exit 0
+- [x] 3.2 Document `--all` in `README.md` (usage section and flags table)
+- [x] 3.3 Run `npm run build`, `npm run typecheck`, and `npm test`; confirm all
       pass

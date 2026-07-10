@@ -209,7 +209,13 @@ function formatVersionTable(versions: AllVersions): string {
 }
 
 async function main(): Promise<void> {
-  const { tag, changelog, helm, terraform } = parseArgs(process.argv);
+  const { tag, changelog, helm, terraform, all } = parseArgs(process.argv);
+
+  if (all) {
+    const versions = await fetchAllVersions();
+    console.log(formatVersionTable(versions));
+    return;
+  }
 
   if (terraform) {
     const version = await fetchTerraformModuleVersion();
