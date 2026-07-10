@@ -51,7 +51,13 @@ function run(argv: string[], t: { mock: { method: typeof import("node:test").moc
 
 test("no flags → tag=latest, all booleans false", (t) => {
   const { result } = run([], t);
-  assert.deepEqual(result, { tag: "latest", changelog: false, helm: false, terraform: false });
+  assert.deepEqual(result, {
+    tag: "latest",
+    changelog: false,
+    helm: false,
+    terraform: false,
+    all: false,
+  });
 });
 
 test("--beta → tag=beta", (t) => {
@@ -86,6 +92,11 @@ test("--helm → helm=true, tag=latest", (t) => {
 test("--terraform → terraform=true", (t) => {
   const { result } = run(["--terraform"], t);
   assert.equal(result?.terraform, true);
+});
+
+test("--all → all=true", (t) => {
+  const { result } = run(["--all"], t);
+  assert.equal(result?.all, true);
 });
 
 // ---------------------------------------------------------------------------
@@ -146,6 +157,36 @@ test("--terraform --beta → exit 1", (t) => {
 
 test("--terraform --next → exit 1", (t) => {
   const { exitCode, stderr } = run(["--terraform", "--next"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --beta → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--beta"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --next → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--next"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --helm → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--helm"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --terraform → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--terraform"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --changelog → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--changelog"], t);
   assert.equal(exitCode, 1);
   assert.ok(stderr.length > 0);
 });

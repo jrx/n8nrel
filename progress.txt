@@ -167,3 +167,16 @@ Started: 2026-07-01
   - Docs-only sections are fast: update README, run checks, validate, commit
   - Live smoke tests for network-dependent flags confirm User-Agent header is working (no 403s)
 ---
+
+## [2026-07-10] - add-all-versions-table - 1. Argument parsing
+- Added `all: boolean` to `ParsedArgs`, `--all` to the `known` flags set, and destructured `all` in `parseArgs`
+- Added mutual-exclusion guard: `--all` combined with `--beta`, `--next`, `--helm`, `--terraform`, or `--changelog` exits 1 with an error message
+- Updated `USAGE` string to include `[--all]`
+- Added parser unit tests: `--all` alone sets `all: true`; each of the five mutual-exclusion combinations (`--all --beta`, `--all --next`, `--all --helm`, `--all --terraform`, `--all --changelog`) exits 1 with non-empty stderr
+- Updated the existing "no flags" deepEqual test to include the new `all: false` field
+- Files changed: `src/index.ts`, `src/index.test.ts`, `openspec/changes/add-all-versions-table/tasks.md`
+- **Learnings for future iterations:**
+  - New flag pattern is now well-established: add to `ParsedArgs`, add to `known` Set, destructure + conflict-check in `parseArgs`, update `USAGE`, add tests. `--all`'s conflict check lists all five other flags in one guard since it excludes everything.
+  - `main()` still only destructures `{ tag, changelog, helm, terraform }` from `parseArgs` result; dispatch logic for `all` is deferred to task 3 (aggregate lookup + table not implemented yet)
+  - Build, typecheck, and all 25 tests pass after this section
+---

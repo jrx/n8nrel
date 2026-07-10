@@ -7,9 +7,11 @@ interface ParsedArgs {
   changelog: boolean;
   helm: boolean;
   terraform: boolean;
+  all: boolean;
 }
 
-const USAGE = "Usage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--help]";
+const USAGE =
+  "Usage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--all] [--help]";
 
 function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
@@ -35,7 +37,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   }
 
   const flags = args;
-  const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform"]);
+  const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform", "--all"]);
   const unknown = flags.filter((f) => !known.has(f));
 
   if (unknown.length > 0) {
@@ -48,6 +50,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const changelog = flags.includes("--changelog");
   const helm = flags.includes("--helm");
   const terraform = flags.includes("--terraform");
+  const all = flags.includes("--all");
 
   if (hasBeta && hasNext) {
     process.stderr.write("Error: --beta and --next cannot be used together\n");
@@ -64,8 +67,15 @@ function parseArgs(argv: string[]): ParsedArgs {
     process.exit(1);
   }
 
+  if (all && (hasBeta || hasNext || helm || terraform || changelog)) {
+    process.stderr.write(
+      "Error: --all cannot be used with --beta, --next, --helm, --terraform, or --changelog\n",
+    );
+    process.exit(1);
+  }
+
   const tag = hasBeta ? "beta" : hasNext ? "next" : "latest";
-  return { tag, changelog, helm, terraform };
+  return { tag, changelog, helm, terraform, all };
 }
 
 async function fetchJson(url: string, extraHeaders: Record<string, string> = {}): Promise<unknown> {
