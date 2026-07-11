@@ -7,9 +7,11 @@ interface ParsedArgs {
   changelog: boolean;
   helm: boolean;
   terraform: boolean;
+  all: boolean;
 }
 
-const USAGE = "Usage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--help]";
+const USAGE =
+  "Usage: n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--all] [--help]";
 
 function parseArgs(argv: string[]): ParsedArgs {
   const args = argv.slice(2);
@@ -35,7 +37,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   }
 
   const flags = args;
-  const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform"]);
+  const known = new Set(["--beta", "--next", "--changelog", "--helm", "--terraform", "--all"]);
   const unknown = flags.filter((f) => !known.has(f));
 
   if (unknown.length > 0) {
@@ -48,6 +50,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const changelog = flags.includes("--changelog");
   const helm = flags.includes("--helm");
   const terraform = flags.includes("--terraform");
+  const all = flags.includes("--all");
 
   if (hasBeta && hasNext) {
     process.stderr.write("Error: --beta and --next cannot be used together\n");
@@ -64,8 +67,15 @@ function parseArgs(argv: string[]): ParsedArgs {
     process.exit(1);
   }
 
+  if (all && (hasBeta || hasNext || helm || terraform || changelog)) {
+    process.stderr.write(
+      "Error: --all cannot be used with --beta, --next, --helm, --terraform, or --changelog\n",
+    );
+    process.exit(1);
+  }
+
   const tag = hasBeta ? "beta" : hasNext ? "next" : "latest";
-  return { tag, changelog, helm, terraform };
+  return { tag, changelog, helm, terraform, all };
 }
 
 async function fetchJson(url: string, extraHeaders: Record<string, string> = {}): Promise<unknown> {
@@ -156,8 +166,56 @@ function printRelease({ tagName, body }: { tagName: string; body: string }): voi
   }
 }
 
+interface AllVersions {
+  stable: string;
+  beta: string;
+  next: string;
+  helm: string;
+  terraform: string;
+}
+
+async function fetchAllVersions(): Promise<AllVersions> {
+  const [stable, beta, next, helm, terraform] = await Promise.allSettled([
+    fetchVersion("latest"),
+    fetchVersion("beta"),
+    fetchVersion("next"),
+    fetchHelmChartRelease().then((release) => release.version),
+    fetchTerraformModuleVersion(),
+  ]);
+
+  const resolve = (result: PromiseSettledResult<string>): string =>
+    result.status === "fulfilled" ? result.value : "n/a";
+
+  return {
+    stable: resolve(stable),
+    beta: resolve(beta),
+    next: resolve(next),
+    helm: resolve(helm),
+    terraform: resolve(terraform),
+  };
+}
+
+function formatVersionTable(versions: AllVersions): string {
+  const rows: Array<[string, string]> = [
+    ["stable", versions.stable],
+    ["beta", versions.beta],
+    ["next", versions.next],
+    ["helm", versions.helm],
+    ["terraform", versions.terraform],
+  ];
+
+  const labelWidth = Math.max(...rows.map(([label]) => label.length));
+  return rows.map(([label, version]) => `${label.padEnd(labelWidth + 2)}${version}`).join("\n");
+}
+
 async function main(): Promise<void> {
-  const { tag, changelog, helm, terraform } = parseArgs(process.argv);
+  const { tag, changelog, helm, terraform, all } = parseArgs(process.argv);
+
+  if (all) {
+    const versions = await fetchAllVersions();
+    console.log(formatVersionTable(versions));
+    return;
+  }
 
   if (terraform) {
     const version = await fetchTerraformModuleVersion();
@@ -190,7 +248,7 @@ async function main(): Promise<void> {
   }
 }
 
-export { parseArgs };
+export { parseArgs, fetchAllVersions, formatVersionTable };
 
 if (require.main === module) {
   main().catch((err: unknown) => {

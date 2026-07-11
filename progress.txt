@@ -167,3 +167,51 @@ Started: 2026-07-01
   - Docs-only sections are fast: update README, run checks, validate, commit
   - Live smoke tests for network-dependent flags confirm User-Agent header is working (no 403s)
 ---
+
+## [2026-07-10] - add-all-versions-table - 1. Argument parsing
+- Added `all: boolean` to `ParsedArgs`, `--all` to the `known` flags set, and destructured `all` in `parseArgs`
+- Added mutual-exclusion guard: `--all` combined with `--beta`, `--next`, `--helm`, `--terraform`, or `--changelog` exits 1 with an error message
+- Updated `USAGE` string to include `[--all]`
+- Added parser unit tests: `--all` alone sets `all: true`; each of the five mutual-exclusion combinations (`--all --beta`, `--all --next`, `--all --helm`, `--all --terraform`, `--all --changelog`) exits 1 with non-empty stderr
+- Updated the existing "no flags" deepEqual test to include the new `all: false` field
+- Files changed: `src/index.ts`, `src/index.test.ts`, `openspec/changes/add-all-versions-table/tasks.md`
+- **Learnings for future iterations:**
+  - New flag pattern is now well-established: add to `ParsedArgs`, add to `known` Set, destructure + conflict-check in `parseArgs`, update `USAGE`, add tests. `--all`'s conflict check lists all five other flags in one guard since it excludes everything.
+  - `main()` still only destructures `{ tag, changelog, helm, terraform }` from `parseArgs` result; dispatch logic for `all` is deferred to task 3 (aggregate lookup + table not implemented yet)
+  - Build, typecheck, and all 25 tests pass after this section
+---
+
+## [2026-07-10] - add-all-versions-table - 2. Aggregate lookup and table
+- Added `fetchAllVersions()`: runs `fetchVersion("latest"|"beta"|"next")`,
+  `fetchHelmChartRelease().then(r => r.version)`, and
+  `fetchTerraformModuleVersion()` via `Promise.allSettled`; maps rejected
+  results to `"n/a"`
+- Added `formatVersionTable(versions)`: renders stable/beta/next/helm/terraform
+  rows, label column padded to the longest label + 2 spaces so all version
+  values start at the same column
+- Exported `fetchAllVersions` and `formatVersionTable` alongside `parseArgs` for
+  unit testing
+- Added two unit tests: all-resolved values, and a mix of resolved + `n/a`;
+  both assert row order and that all version values start at the same column
+- Files changed: `src/index.ts`, `src/index.test.ts`
+- **Learnings for future iterations:**
+  - `Promise.allSettled` + a small `resolve()` helper (`status === "fulfilled" ? value : "n/a"`) is the clean pattern for "run N lookups, don't let one failure kill the rest"
+  - `main()` is not wired to `all` yet (that's section 3); `all` is destructured but unused in `main` until then, which is fine, no lint script exists to flag it
+  - Column alignment: `label.padEnd(maxLabelLength + 2)` is simplest; test by regex-matching the whitespace immediately before the trailing version token and asserting all rows have the same start index
+
+## [2026-07-10] - add-all-versions-table - 3. Dispatch and docs
+- Wired `all` into `main()`: new branch calls `fetchAllVersions()` then
+  `console.log(formatVersionTable(versions))` and returns before the
+  terraform/helm/npm branches
+- Documented `--all` in README.md: usage string, a new "All versions" section
+  with example table output and concurrency/failure notes, and a flags-table row
+- Ran `npm run build`, `npm run typecheck`, `npm test` (27 tests pass), and a
+  live smoke test of `n8nrel --all` (prints aligned table, exit 0)
+- `openspec validate add-all-versions-table --strict` passes
+- Files changed: `src/index.ts`, `README.md`, `openspec/changes/add-all-versions-table/tasks.md`
+- **Learnings for future iterations:**
+  - `all` branch goes first in `main()`, before terraform/helm, since it's
+    mutually exclusive with everything else and has no further sub-options
+  - Final dispatch section for a change is usually fast once earlier sections
+    built the helpers: wire one branch, update README, run checks, validate
+---

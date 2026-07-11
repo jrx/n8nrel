@@ -17,7 +17,7 @@ After `npm link`, `n8nrel` is available anywhere in your terminal.
 ## Usage
 
 ```
-n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--help]
+n8nrel [--beta | --next] [--changelog] [--helm] [--terraform] [--all] [--help]
 ```
 
 ### n8n npm package (default)
@@ -94,6 +94,25 @@ n8nrel --terraform --changelog
 
 `--terraform` cannot be combined with `--helm`, `--beta`, or `--next`.
 
+### All versions
+
+Print the latest stable, beta, and next npm versions, the latest Helm chart
+version, and the latest Terraform module version together as a single aligned
+table:
+
+```sh
+n8nrel --all
+# stable     1.98.1
+# beta       1.99.0-beta.1
+# next       1.100.0-rc.2
+# helm       1.10.1
+# terraform  0.1.0
+```
+
+The five lookups run concurrently. If one fails, its row prints `n/a` and the
+command still exits 0. `--all` cannot be combined with `--beta`, `--next`,
+`--helm`, `--terraform`, or `--changelog`.
+
 ## Flags
 
 | Flag | Description |
@@ -104,4 +123,5 @@ n8nrel --terraform --changelog
 | `--changelog` | Also print the GitHub release notes |
 | `--helm` | Look up the latest n8n Helm chart version |
 | `--terraform` | Look up the latest n8n AWS Terraform module version |
+| `--all` | Print stable, beta, next, Helm, and Terraform versions as a table |
 | `--help`, `-h` | Print the usage string and exit |

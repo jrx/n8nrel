@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseArgs } from "./index.js";
+import { parseArgs, formatVersionTable } from "./index.js";
 
 // ---------------------------------------------------------------------------
 // Helper: run parseArgs with mocked process.exit / process.stderr.write /
@@ -51,7 +51,13 @@ function run(argv: string[], t: { mock: { method: typeof import("node:test").moc
 
 test("no flags → tag=latest, all booleans false", (t) => {
   const { result } = run([], t);
-  assert.deepEqual(result, { tag: "latest", changelog: false, helm: false, terraform: false });
+  assert.deepEqual(result, {
+    tag: "latest",
+    changelog: false,
+    helm: false,
+    terraform: false,
+    all: false,
+  });
 });
 
 test("--beta → tag=beta", (t) => {
@@ -86,6 +92,11 @@ test("--helm → helm=true, tag=latest", (t) => {
 test("--terraform → terraform=true", (t) => {
   const { result } = run(["--terraform"], t);
   assert.equal(result?.terraform, true);
+});
+
+test("--all → all=true", (t) => {
+  const { result } = run(["--all"], t);
+  assert.equal(result?.all, true);
 });
 
 // ---------------------------------------------------------------------------
@@ -150,9 +161,91 @@ test("--terraform --next → exit 1", (t) => {
   assert.ok(stderr.length > 0);
 });
 
+test("--all --beta → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--beta"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --next → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--next"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --helm → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--helm"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --terraform → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--terraform"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
+test("--all --changelog → exit 1", (t) => {
+  const { exitCode, stderr } = run(["--all", "--changelog"], t);
+  assert.equal(exitCode, 1);
+  assert.ok(stderr.length > 0);
+});
+
 // ---------------------------------------------------------------------------
 // Argument validation: exit 1, usage on stderr
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// formatVersionTable
+// ---------------------------------------------------------------------------
+
+test("formatVersionTable: all resolved values", () => {
+  const table = formatVersionTable({
+    stable: "1.20.0",
+    beta: "1.21.0-beta.1",
+    next: "1.22.0-next.1",
+    helm: "1.10.1",
+    terraform: "0.1.0",
+  });
+
+  const lines = table.split("\n");
+  assert.equal(lines.length, 5);
+  assert.ok(lines[0].startsWith("stable"));
+  assert.ok(lines[0].endsWith("1.20.0"));
+  assert.ok(lines[1].startsWith("beta"));
+  assert.ok(lines[1].endsWith("1.21.0-beta.1"));
+  assert.ok(lines[2].startsWith("next"));
+  assert.ok(lines[2].endsWith("1.22.0-next.1"));
+  assert.ok(lines[3].startsWith("helm"));
+  assert.ok(lines[3].endsWith("1.10.1"));
+  assert.ok(lines[4].startsWith("terraform"));
+  assert.ok(lines[4].endsWith("0.1.0"));
+
+  // versions start at the same column across all rows
+  const versionStarts = lines.map((line) => {
+    const match = /\s+(?=\S+$)/.exec(line);
+    return match ? match.index + match[0].length : -1;
+  });
+  assert.equal(new Set(versionStarts).size, 1);
+});
+
+test("formatVersionTable: mix of resolved and n/a", () => {
+  const table = formatVersionTable({
+    stable: "1.20.0",
+    beta: "n/a",
+    next: "1.22.0-next.1",
+    helm: "n/a",
+    terraform: "0.1.0",
+  });
+
+  const lines = table.split("\n");
+  assert.equal(lines.length, 5);
+  assert.ok(lines[0].startsWith("stable") && lines[0].endsWith("1.20.0"));
+  assert.ok(lines[1].startsWith("beta") && lines[1].endsWith("n/a"));
+  assert.ok(lines[2].startsWith("next") && lines[2].endsWith("1.22.0-next.1"));
+  assert.ok(lines[3].startsWith("helm") && lines[3].endsWith("n/a"));
+  assert.ok(lines[4].startsWith("terraform") && lines[4].endsWith("0.1.0"));
+});
 
 test("positional argument → exit 1, usage on stderr", (t) => {
   const { exitCode, stderr } = run(["foo"], t);
