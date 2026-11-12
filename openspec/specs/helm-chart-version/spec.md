@@ -46,7 +46,7 @@ when `--helm` and `--changelog` are used together.
 - **AND** SHALL NOT fail
 - **AND** exit with code 0
 
-### Requirement: Reject non-stable channels with Helm
+### Requirement: Reject n8n channel flags with Helm
 
 The CLI SHALL reject `--beta` or `--next` when combined with `--helm`, because
 the Helm chart has no beta or next channel.
@@ -63,3 +63,20 @@ the Helm chart has no beta or next channel.
 - **THEN** the CLI SHALL print an error message to stderr
 - **AND** exit with a non-zero code
 
+### Requirement: Check Helm previews
+
+`--helm --preview` SHALL use the explicit preview selection rules in cli-usage
+against `n8n-io/n8n-hosting` releases with `v`-prefixed semantic version tags.
+The normal `--helm` lookup SHALL continue using the release marked Latest.
+
+#### Scenario: Helm 2.0 release candidate
+
+- **WHEN** the latest stable chart is `v1.19.0` and the highest prerelease is `v2.0.0-rc.1`
+- **THEN** `--helm` SHALL print `1.19.0`
+- **AND** `--helm --preview` SHALL print `2.0.0-rc.1`
+- **AND** `--helm --preview --changelog` SHALL print the preview tag and notes
+
+#### Scenario: Release candidate numeric ordering
+
+- **WHEN** both `v2.0.0-rc.2` and `v2.0.0-rc.10` are published prereleases
+- **THEN** the preview lookup SHALL prefer `2.0.0-rc.10`

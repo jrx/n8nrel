@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+
+# Amp's base image includes Node.js and npm; this repository has no version pin.
+echo "== Toolchain =="
+node --version
+npm --version
+
+# Exact project snapshots skip setup entirely. On a snapshot refresh, npm's
+# download cache makes this small, lockfile-enforced install inexpensive.
+echo "== Install locked dependencies, including development tools =="
+time npm ci --include=dev --prefer-offline --no-audit --no-fund
+
+echo "== Build and check =="
+time npm run build
+time npm test
+
+echo "== Make the CLI available =="
+time npm link --offline --ignore-scripts --no-audit --no-fund
+n8nrel --help

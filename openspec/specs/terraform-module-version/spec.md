@@ -10,6 +10,11 @@ invoked with the `--terraform` flag. The version SHALL be resolved from the
 Terraform Registry API endpoint `/v1/modules/n8n-io/n8n/aws`, using the
 `version` field printed verbatim (no prefix stripping).
 
+`--terraform-azurerm` and `--terraform-google` SHALL use the same Registry
+endpoint with provider `azurerm` and `google`, respectively. All three flags
+SHALL report published Registry versions even when their GitHub releases are
+marked as prereleases.
+
 #### Scenario: Latest module version
 
 - **WHEN** the user runs `n8nrel --terraform`
@@ -30,6 +35,8 @@ Terraform Registry API endpoint `/v1/modules/n8n-io/n8n/aws`, using the
 The CLI SHALL print the `n8n-io/terraform-aws-n8n` GitHub release notes for the
 latest module version when `--terraform` and `--changelog` are used together.
 The release tag SHALL be the module version with no `v` prefix.
+Azure and Google SHALL use `n8n-io/terraform-azurerm-n8n` and
+`n8n-io/terraform-google-n8n`, respectively, with the same version-tag rule.
 
 #### Scenario: Module changelog
 
@@ -49,8 +56,9 @@ The release tag SHALL be the module version with no `v` prefix.
 
 ### Requirement: Reject incompatible flags with Terraform
 
-The CLI SHALL reject `--terraform` when combined with `--helm`, `--beta`, or
-`--next`, since those flags do not apply to the Terraform module.
+The CLI SHALL reject any Terraform source flag when combined with another
+source flag, `--beta`, `--next`, or `--preview`, since those flags do not apply
+to the selected Terraform module.
 
 #### Scenario: Terraform with helm
 
@@ -74,5 +82,5 @@ CLI flag.
 - **WHEN** a reader opens `README.md`
 - **THEN** it SHALL describe installation
 - **AND** document the default n8n version lookup and the `--beta`, `--next`,
-  `--changelog`, `--helm`, and `--terraform` flags with example invocations
-
+  `--preview`, `--changelog`, `--helm`, `--terraform`, `--terraform-azurerm`,
+  `--terraform-google`, `--nod`, and `--all` flags with example invocations

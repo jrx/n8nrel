@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This CLI has no services or authentication to restore. Dependencies and the
+# built CLI persist in the orb; never reinstall or rebuild them on wake.
